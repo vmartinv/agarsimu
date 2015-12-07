@@ -1,0 +1,48 @@
+Lambda Jam 2015 - Conal Elliott - The Essence and Origins of Functional Reactive Programming
+https://www.youtube.com/watch?v=j3Q32brCUAI
+
+Lambda Jam 2015 - Conal Elliott - A More Elegant Specification for FRP
+https://www.youtube.com/watch?v=teRC_Lf61Gw
+
+Resumen pasado de Mauro de lo de arriba:
+http://begriffs.com/posts/2015-07-22-essence-of-frp.html
+
+
+cabal install glwf opengl
+cabal install sdl
+
+
+http://hackage.haskell.org/package/netwire-4.0.5/docs/Control-Wire.html
+
+
+https://ocharles.org.uk/blog/posts/2013-08-18-asteroids-in-netwire.html
+https://github.com/ocharles/netwire-classics/blob/master/asteroids/Asteroids.hs
+
+
+
+http://jshaskell.blogspot.com.ar/2012/11/breakout-improved-and-with-netwire.html
+https://github.com/RudolfVonKrugstein/jshaskell-blog/blob/master/6_BreakoutImproved/code/BreakoutImproved.hs
+
+
+http://todayincode.tumblr.com/post/96914679355/almost-a-netwire-5-tutorial
+
+http://hackage.haskell.org/package/netwire-5.0.1/docs/Control-Wire.html
+
+
+https://ocharles.org.uk/blog/posts/2013-08-01-getting-started-with-netwire-and-sdl.html
+data Wire e m a b = Wire (Time -> a -> (m Either e b, Wire e m a b)
+
+
+https://wiki.haskell.org/Netwire
+
+https://hackage.haskell.org/package/base-4.8.1.0/docs/Control-Arrow.html
+https://hackage.haskell.org/package/vector-space-0.10.2/docs/Data-AdditiveGroup.html
+
+netwire sdl sdl-glx lens 
+
+--cuando se pudo usar los wires (mucho despues de "entenderlos")
+--primer prototipo
+--cuando se pudo entender como combinar las cosas y los tipos
+
+
+
