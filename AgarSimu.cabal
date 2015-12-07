@@ -2,21 +2,27 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                agarsimu
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            AgarSimu is a library to simulate a game similar to Agar.io
 -- description:         
-homepage:            github.com/mvpossum
+homepage:            https://github.com/mvpossum/agarsimu
 license:             BSD3
 license-file:        LICENSE
 author:              Martin Villagra
-maintainer:          mvillagra0@hotmail.com
+maintainer:          Martin Villagra <mvillagra0@hotmail.com>
 -- copyright:           
 category:            Simulation
 build-type:          Simple
 extra-source-files:  README.md
+homepage:            https://github.com/mvpossum/agarsimu
+bug-reports:         https://github.com/mvpossum/agarsimu/issues
 cabal-version:       >=1.10
 
-flag TestProgram
+Source-repository head
+    type:     git
+    location: git://github.com/mvpossum/agarsimu.git
+
+flag test
     default: False
     description: Build the test program
     manual: True
@@ -34,8 +40,7 @@ executable agarsimu-test
     default-language: Haskell2010
     default-extensions:
         Arrows
-    ghc-options: -threaded
     hs-source-dirs: test
     main-is: Test.hs
-    if !flag(testprogram)
+    if !flag(test)
         buildable: False
