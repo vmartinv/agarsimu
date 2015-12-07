@@ -20,6 +20,8 @@ data WorldConsts = WorldConsts { _worlSize :: Vector
                                }
 $(makeLenses ''WorldConsts)
 
+defWorldConsts :: WorldConsts
+defWorldConsts = WorldConsts (400, 400) (400, 400) 0.0016 60
 
 --------------------------------------------------------------------------------
 data Camera = Camera { _camPos :: Vector
@@ -27,6 +29,8 @@ data Camera = Camera { _camPos :: Vector
                      }
 $(makeLenses ''Camera)
 
+defCam :: WorldConsts -> Camera
+defCam w = Camera (0, 0) 1
 
 --------------------------------------------------------------------------------
 data Bola = Bola { _bolPos :: Vector
@@ -42,7 +46,7 @@ renderBola surf color cam b = void $ do
     SDL.filledCircle surf (round x) (round y) (round r) color
     SDL.aaCircle surf (round x) (round y) (round r) color
     where (x, y) = view bolPos b ^-^ view camPos cam
-          r = getRadio b 
+          r = getRadio b  ^-^ view camZoom cam
 
 moveBola :: WorldConsts -> Vector -> Bola -> Bola
 moveBola w v bola = over bolPos (clamp.(((view worlSpeed w * view bolMass bola)*^v)^+^)) bola
