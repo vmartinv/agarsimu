@@ -1,6 +1,6 @@
-Agar.Simu
+AgarSimu
 =========
 
-Agar.Simu is a library to simulate a game similar to Agar.io
+AgarSimu is a library to simulate a game similar to Agar.io
 It provides an interface to make bots who will play in the simulation.
 

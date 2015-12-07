@@ -1,6 +1,6 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE StandaloneDeriving #-}
-module Agar.Simu.Core where
+module AgarSimu.Core where
 
 import Prelude hiding ((.), id)
 import qualified Prelude
@@ -12,7 +12,7 @@ import Data.VectorSpace ((^+^), (^-^), normalized, (*^))
 import qualified Data.Set as Set
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Primitives as SDL
-import Agar.Simu.Entities
+import AgarSimu.Entities
 
 type Environment = (Player, [Player])
 type Scene s = [(AI s, Player)]

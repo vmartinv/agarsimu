@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Agar.Simu.Entities where
+module AgarSimu.Entities where
 
 import Prelude
 import Control.Lens hiding (at, perform, wrapped)

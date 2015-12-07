@@ -4,10 +4,10 @@
 -- License:    BSD3
 -- Maintainer: Martin Villagra <mvillagra0@gmail.com>
 
-module Agar.Simu
+module AgarSimu
     ( -- * Reexports
-      module Agar.Simu.Core,
-      module Agar.Simu.Entities,
+      module AgarSimu.Core,
+      module AgarSimu.Entities,
 
       -- * External
       module Prelude,
@@ -17,5 +17,5 @@ module Agar.Simu
 
 import Prelude hiding ((.), id, until)
 import Control.Wire
-import Agar.Simu.Core
-import Agar.Simu.Entities
+import AgarSimu.Core
+import AgarSimu.Entities
