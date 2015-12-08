@@ -1,7 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module AgarSimu.Entities where
 
-import Prelude
 import Control.Lens hiding (at, perform, wrapped)
 import Control.Monad (void)
 import Data.Maybe
@@ -21,16 +20,39 @@ data WorldConsts = WorldConsts { _worlSize :: Vector
 $(makeLenses ''WorldConsts)
 
 defWorldConsts :: WorldConsts
-defWorldConsts = WorldConsts (400, 400) (400, 400) 0.0016 60
+defWorldConsts = WorldConsts (200, 200) (400, 400) 0.0016 60
 
 --------------------------------------------------------------------------------
 data Camera = Camera { _camPos :: Vector
                      , _camZoom :: Double
+                     , _camSize :: Vector
                      }
 $(makeLenses ''Camera)
 
+          
+camZoomIn :: Camera -> Camera
+camZoomIn cam = over camZoom (*1.1) cam   
+
+camZoomOut :: Camera -> Camera
+camZoomOut cam = over camZoom (*0.9) cam
+
+camMove :: Camera -> Vector -> Camera      
+camMove cam (x, y) = over camPos (^-^v) cam
+    where v = (x / view camZoom cam, y / view camZoom cam)
+    
 defCam :: WorldConsts -> Camera
-defCam w = Camera (0, 0) 1
+defCam w = Camera ((wx+px)/2, (wy+py)/2) scale (px, py)
+    where (wx, wy) = view worlSize w
+          (vx', vy') = view worlWindowSize w
+          (vx, vy) = (fromIntegral vx', fromIntegral vy')
+          scale = if wx/wy > vx/vy then vx/wx else vy/wy
+          (px, py) = (vy/scale, vx/scale)
+
+toScreen :: Camera -> Double -> Double
+toScreen cam x = x * (view camZoom cam)
+toScreenV :: Camera -> Vector -> Vector
+toScreenV cam v = (toScreen cam x', toScreen cam y')
+    where (x', y') = v ^-^ (view camPos cam) ^+^ (view camSize cam)
 
 --------------------------------------------------------------------------------
 data Bola = Bola { _bolPos :: Vector
@@ -45,8 +67,8 @@ renderBola :: SDL.Surface -> SDL.Pixel -> Camera -> Bola -> IO ()
 renderBola surf color cam b = void $ do
     SDL.filledCircle surf (round x) (round y) (round r) color
     SDL.aaCircle surf (round x) (round y) (round r) color
-    where (x, y) = view bolPos b ^-^ view camPos cam
-          r = getRadio b  ^-^ view camZoom cam
+    where (x, y) = toScreenV cam (view bolPos b)
+          r = max 1 (toScreen cam (getRadio b))
 
 moveBola :: WorldConsts -> Vector -> Bola -> Bola
 moveBola w v bola = over bolPos (clamp.(((view worlSpeed w * view bolMass bola)*^v)^+^)) bola

@@ -20,16 +20,16 @@ type AI = SimpleWire Environment Vector
 
 --------------------------------------------------------------------------------
 runSimulation :: WorldConsts -> Scene -> IO ()
-runSimulation w scene = do
-    SDL.withInit [SDL.InitEverything] $ do
+runSimulation w scene = SDL.withInit [SDL.InitEverything] $ do
         let (x,y) = view worlWindowSize w
         let fps = fromIntegral (view worlFPS w)
         screen <- SDL.setVideoMode x y 0 [SDL.SWSurface]--, SDL.Fullscreen]
         let gamewire = addFeedback players (game w ais)
-        let controlswire = addFeedback Set.empty (mkGen_' parseEvents)
-        let mainwire = showGame w screen gamewire . controlswire
+        let mainwire = showGame w screen gamewire . (mouseCamWire w)
         testWireM id (countSession_ (1.0 / fps)) (pure () . mainwire)
     where (ais, players) = unzip scene
+          (x,y) = view worlWindowSize w
+          fps = fromIntegral (view worlFPS w)
 
 renderFrame :: WorldConsts -> SDL.Surface -> Camera -> [Player] -> IO ()
 renderFrame w screen cam players = do
@@ -37,12 +37,29 @@ renderFrame w screen cam players = do
                 SDL.fillRect screen Nothing
             mapM_ (renderPlayer screen cam) players
             SDL.flip screen
-            SDL.delay (1000 `div` fromIntegral (view worlFPS w))
+            SDL.delay (1000 `div` fps)
+    where fps = fromIntegral (view worlFPS w)
 
-showGame :: WorldConsts -> SDL.Surface -> WireP s e () [Player] -> Wire s e IO (Set.Set SDL.Keysym) [Player]
-showGame w screen game = proc keys -> do
+mouseCamWire :: WorldConsts -> Wire s e IO a Camera
+mouseCamWire w = mkSF_ snd . addFeedback (False, defCam w) (mkGen_' mouseCam)
+
+mouseCam :: (Bool, Camera) -> IO (Bool, Camera)
+mouseCam st@(b, cam) = do
+  event <- SDL.pollEvent
+  case event of
+    SDL.NoEvent -> return st
+    SDL.MouseButtonDown _ _ SDL.ButtonLeft -> mouseCam (True, cam)
+    SDL.MouseButtonUp _ _ SDL.ButtonLeft -> mouseCam (False, cam)
+    SDL.MouseMotion _ _ x y | b -> mouseCam (b, camMove cam (fromIntegral x, fromIntegral y))
+    SDL.MouseButtonDown _ _ SDL.ButtonWheelUp -> mouseCam (b, camZoomIn cam)
+    SDL.MouseButtonDown _ _ SDL.ButtonWheelDown -> mouseCam (b, camZoomOut cam)
+    _ -> mouseCam st
+
+showGame :: WorldConsts -> SDL.Surface -> WireP s e () [Player] -> Wire s e IO Camera [Player]
+showGame w screen game = proc cam -> do
+    let cami = cam
     newPlayers <- addMonad game -< ()
-    mkGen_' (renderFrame w screen (defCam w)) -< newPlayers
+    mkGen_' (uncurry $ renderFrame w screen) -< (cam, newPlayers)
     returnA -< newPlayers
 
 addMonad :: (Monad m) => Wire s e Identity a b -> Wire s e m a b
@@ -62,17 +79,17 @@ liftAI w ai = when (not.died) . proc (yo, otros) -> do
     where died p = length (view plaBolas p) == 0
 
 --------------------------------------------------------------------------------
-deriving instance Ord SDL.Keysym
-parseEvents :: Set.Set SDL.Keysym -> IO (Set.Set SDL.Keysym)
-parseEvents keysDown = do
-  event <- SDL.pollEvent
-  case event of
-    SDL.NoEvent -> return keysDown
-    SDL.KeyDown k -> parseEvents (Set.insert k keysDown)
-    SDL.KeyUp k -> parseEvents (Set.delete k keysDown)
-    _ -> parseEvents keysDown
+-- ~ deriving instance Ord SDL.Keysym
+-- ~ parseEvents :: Set.Set SDL.Keysym -> IO (Set.Set SDL.Keysym)
+-- ~ parseEvents keysDown = do
+  -- ~ event <- SDL.pollEvent
+  -- ~ case event of
+    -- ~ SDL.NoEvent -> return keysDown
+    -- ~ SDL.KeyDown k -> parseEvents (Set.insert k keysDown)
+    -- ~ SDL.KeyUp k -> parseEvents (Set.delete k keysDown)
+    -- ~ _ -> parseEvents keysDown
 
-keyDown :: Foldable f => SDL.SDLKey -> f SDL.Keysym -> Bool
-keyDown = elemOf (folded . to SDL.symKey)
+-- ~ keyDown :: Foldable f => SDL.SDLKey -> f SDL.Keysym -> Bool
+-- ~ keyDown = elemOf (folded . to SDL.symKey)
 
 
