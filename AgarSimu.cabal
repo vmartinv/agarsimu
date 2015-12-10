@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                agarsimu
-version:             0.1.0.2
+version:             0.1.0.3
 synopsis:            AgarSimu is a library to simulate a game similar to Agar.io
 -- description:         
 homepage:            https://github.com/mvpossum/agarsimu
@@ -22,25 +22,16 @@ Source-repository head
     type:     git
     location: git://github.com/mvpossum/agarsimu.git
 
-flag test
-    default: False
-    description: Build the test program
-    manual: True
-
 library
   exposed-modules:     AgarSimu, AgarSimu.Core, AgarSimu.Entities
   other-modules:       AgarSimu.Utils
   other-extensions:    Arrows, StandaloneDeriving, TemplateHaskell
-  build-depends:       base >=4.8 && <4.9, netwire >=5.0 && <5.1, lens >=4.13 && <4.14, vector-space >=0.10 && <0.11, containers >=0.5 && <0.6, SDL >=0.6 && <0.7, SDL-gfx >=0.6 && <0.7    
+  build-depends:       netwire >=5.0 && <5.1, SDL-gfx, SDL, vector-space, lens, MonadRandom, containers, base
   default-language:    Haskell2010
 
-executable agarsimu-test
-    build-depends:
-        agarsimu
+Test-Suite agarsimu-tests
+    type:       exitcode-stdio-1.0
+    build-depends: agarsimu, netwire >=5.0, base
     default-language: Haskell2010
-    default-extensions:
-        Arrows
-    hs-source-dirs: test
+    hs-source-dirs: tests
     main-is: Test.hs
-    if !flag(test)
-        buildable: False
