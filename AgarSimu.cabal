@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                agarsimu
-version:             0.1.0.3
+version:             0.1.0.4
 synopsis:            AgarSimu is a library to simulate a game similar to Agar.io
 -- description:         
 homepage:            https://github.com/mvpossum/agarsimu
@@ -23,8 +23,8 @@ Source-repository head
     location: git://github.com/mvpossum/agarsimu.git
 
 library
-  exposed-modules:     AgarSimu, AgarSimu.Core, AgarSimu.Entities
-  other-modules:       AgarSimu.Utils
+  exposed-modules:     AgarSimu, AgarSimu.Core, AgarSimu.PublicEntities, AgarSimu.PreFab 
+  other-modules:       AgarSimu.Utils, AgarSimu.Entities
   other-extensions:    Arrows, StandaloneDeriving, TemplateHaskell
   build-depends:       netwire >=5.0 && <5.1, SDL-gfx, SDL, vector-space, lens, MonadRandom, containers, base
   default-language:    Haskell2010

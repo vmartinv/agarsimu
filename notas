@@ -44,5 +44,15 @@ netwire sdl sdl-glx lens
 --primer prototipo
 --cuando se pudo entender como combinar las cosas y los tipos
 
+http://stackoverflow.com/questions/9856342/how-does-this-definition-of-arrowloop-loop-work
+http://stackoverflow.com/questions/6976944/how-does-arrowloop-work-also-mfix
+https://en.wikibooks.org/wiki/Haskell/Arrow_tutorial
+https://downloads.haskell.org/~ghc/7.8.4/docs/html/users_guide/arrow-notation.html
+http://stackoverflow.com/questions/7781096/is-there-a-better-way-to-have-optional-arguments-in-haskell
 
+git clone
+cd agarsimu
+cabal sandbox init
+cabal install --only-dependencies
+cabal test
 
