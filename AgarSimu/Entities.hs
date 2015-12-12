@@ -93,13 +93,16 @@ renderBola surf cam b = void $ do
 clampCircle :: WorldConsts -> Double -> Vector -> Vector
 clampCircle w r (x, y) = let (wx, wy) = view worlSize w
                          in (clamp r (wx-r) x, clamp r (wy-r) y)
-    where clamp mn mx = max mn . min mx
+
+clamp :: Ord a => a -> a -> a -> a
+clamp mn mx = max mn . min mx
     
 mkBolaVec :: Bola -> Vector -> Vector
-mkBolaVec b v =  speedConstant *^ normalized ^/ view bolMass b
-    where normalized = let m = magnitude v
+mkBolaVec b v =  speedConstant *^ normalized ^/ mass
+    where mass = view bolMass b
+          normalized = let m = magnitude v
                        in if m>1 then v^/m else v
-          speedConstant = 500
+          speedConstant = 10*25
 
 collideBola :: [Bola] -> Bola -> Maybe Bola
 collideBola others me = if any (eats me) others
@@ -114,11 +117,16 @@ collideBola others me = if any (eats me) others
 renderBackground :: WorldConsts -> SDL.Surface -> Camera -> IO ()
 renderBackground wc surf cam = void $ do
     -- ~ SDL.rectangle surf (SDL.Rect (round x1) (round y1) (round x2) (round y2)) lineColor
-    drawLines (\y -> SDL.hLine surf (round x1) (round x2) (round y) lineColor) y1 y2 separation
-    drawLines (\x -> SDL.vLine surf (round x) (round y1) (round y2) lineColor) x1 x2 separation
+    SDL.fillRect surf (Just $ SDL.Rect (round x1) (round y1) (round $ x2-x1) (round $ y2-y1)) backColor
+    when (separation>4) $ do
+        drawLines (\y -> SDL.hLine surf (round x1) (round x2) (round y) lineColor) y1' (min vy y2) separation
+        drawLines (\x -> SDL.vLine surf (round x) (round y1) (round y2) lineColor) x1' (min vx x2) separation
     where (x1, y1) = toScreenV cam (0, 0)
+          (x1', y1') = (x1, y1)
           (x2, y2) = toScreenV cam (view worlSize wc)
+          (vx, vy) = view camSize cam
           lineColor = rgbColor 216 224 228
+          backColor = rgbColor 242 251 255
           separation = let wx = fst $ view worlSize wc :: Double
                            divs = round $ wx / 3 :: Int
                        in  toScreen cam (wx/fromIntegral divs)

@@ -46,7 +46,8 @@ runSimulation wc scene = SDL.withInit [SDL.InitEverything] $ do
                 camera <- inputwire -< x
                 frame <- gamewire -< x
                 renderwire -< (camera, frame)
-        runAnimation id (countSession_ 0.005) mainwire
+        runAnimation id (countSession_ $ 1/defFPS) mainwire
+        -- ~ runAnimation id (countSession_ 0.05) mainwire
     where (ais, players) = unzip scene
           (x,y) = view worlWindowSize wc
           speed = view worlSpeed wc
@@ -99,7 +100,7 @@ renderLogic frameRate wc screen = proc frame -> do
             then renderFrame -< frame
             else returnA -< ()
     where renderFrame = mkGen_' $ \(cam, bolas) -> do
-            SDL.mapRGB (SDL.surfaceGetPixelFormat screen) 242 251 255 >>=
+            SDL.mapRGB (SDL.surfaceGetPixelFormat screen) 0 0 0 >>=
                 SDL.fillRect screen Nothing
             renderBackground wc screen cam
             mapM (renderBola screen cam) bolas

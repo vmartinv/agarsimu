@@ -14,7 +14,7 @@ module AgarSimu.PublicEntities
       -- * World
       WorldConsts(..),
       mkWorldConsts,
-      worlSize, worlWindowSize, worlSpeed, worlStep,
+      worlSize, worlWindowSize, worlSpeed,
       
       -- * Bola
       Bola(..),
@@ -53,12 +53,11 @@ type Vector = (Double, Double)
 data WorldConsts = WorldConsts { _worlSize :: Vector
                                , _worlWindowSize :: (Int, Int)
                                , _worlSpeed :: Int
-                               , _worlStep :: NominalDiffTime
                                } deriving Show
 $(makeLenses ''WorldConsts)
 
-mkWorldConsts :: Maybe Vector -> Maybe (Int, Int) -> Maybe Int -> Maybe NominalDiffTime -> WorldConsts
-mkWorldConsts v ws t s = WorldConsts (v//(100, 100)) (ws//(400, 400)) (t//1) (s//0.1)
+mkWorldConsts :: Maybe Vector -> Maybe (Int, Int) -> Maybe Int -> WorldConsts
+mkWorldConsts v ws t = WorldConsts (v//(100, 100)) (ws//(400, 400)) (t//1)
     where (//) = flip fromMaybe
 
 --------------------------------------------------------------------------------
