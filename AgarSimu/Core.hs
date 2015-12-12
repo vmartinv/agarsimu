@@ -56,7 +56,6 @@ gameLogic :: WorldConsts -> Scene -> RandomWire a [Bola]
 gameLogic wc scene = proc _ -> do
         rec
             oldBolas <- delay inits -< bolas
-            -- ~ bolas <- aiswire -< replicate (length oldBolas) []
             bolas <- aiswire -< mkEnvs oldBolas
         returnA -< bolas
     where aiswire = combine $ map (bolaLogic wc) scene
@@ -68,14 +67,14 @@ bolaLogic wc (ai, init) = proc (otros) -> do
         rec
             oldYo <- delay init -< yo
             yo' <- mkSF_ (fromJust) . when (isJust) -< collideBola otros oldYo
-            -- ~ yo' <- returnA -< oldYo
-            v <- ai -< (wc, yo', otros)
+            v <- ai -< ((wx, wy), yo', otros)
             let v' = mkBolaVec yo' v
-            pos <- integralVecWith clampW initV -< (v', (wc, getRadio yo'))
+            pos <- integralVecWith clampCircle initV -< (v', getRadio yo')
             yo <- returnA -< set bolPos pos yo'
         returnA -< yo
     where initV = view bolPos init
-          clampW (wc, r) v = clampCircle wc r v
+          (wx, wy) = view worlSize wc
+          clampCircle r (x, y) = (clamp r (wx-r) x, clamp r (wy-r) y)
 
 integralVecWith :: HasTime t s
     => (w -> Vector -> Vector)  -- ^ Correction function.

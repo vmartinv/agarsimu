@@ -17,7 +17,6 @@ module AgarSimu.Entities
       
       -- * Bola
       renderBola,
-      clampCircle,
       mkBolaVec,
       collideBola,
       
@@ -36,16 +35,20 @@ import qualified Graphics.UI.SDL.Primitives as SDL
 import qualified Graphics.UI.SDL.TTF as SDLTTF
 import AgarSimu.PublicEntities
 
+
+tmap :: (a -> b) -> (a, a) -> (b, b)
+tmap f (x, y) = (f x, f y)
+
 data Camera = Camera { _camPos :: Vector
                      , _camZoom :: Double
-                     , _camSize :: Vector
+                     , _camSize :: (Int, Int)
                      , _camFonts :: SDLTTF.Font
                      } deriving Show
 $(makeLenses ''Camera)
 
           
 camZoomIn :: Camera -> Camera
-camZoomIn cam = over camZoom (*1.1) cam   
+camZoomIn cam = over camZoom (\z-> min 100 (1.1*z)) cam   
 
 camZoomOut :: Camera -> Camera
 camZoomOut cam = over camZoom (*0.9) cam
@@ -54,7 +57,7 @@ camMove :: Camera -> Vector -> Camera
 camMove cam v = over camPos (^-^ v ^/ (view camZoom cam)) cam
     
 defCam :: WorldConsts -> SDLTTF.Font -> Camera
-defCam w fonts = Camera (wx/2, wy/2) scale (vx, vy) fonts
+defCam w fonts = Camera (wx/2, wy/2) scale (vx', vy') fonts
     where (wx, wy) = view worlSize w
           (vx', vy') = view worlWindowSize w
           (vx, vy) = (fromIntegral vx', fromIntegral vy')
@@ -63,39 +66,32 @@ defCam w fonts = Camera (wx/2, wy/2) scale (vx, vy) fonts
 toScreen :: Camera -> Double -> Double
 toScreen cam x = x * (view camZoom cam)
 toScreenV :: Camera -> Vector -> Vector
-toScreenV cam v = (toScreen cam x', toScreen cam y') ^+^ 0.5 *^ (view camSize cam) 
+toScreenV cam v = (toScreen cam x', toScreen cam y') ^+^ 0.5 *^ (tmap fromIntegral (view camSize cam))
     where (x', y') = v ^-^ (view camPos cam)
 
 --------------------------------------------------------------------------------
 renderBola :: SDL.Surface -> Camera -> Bola -> IO ()
-renderBola surf cam b = void $ do
+renderBola surf cam b =  when (isInRange (-r) x (w+r) && isInRange (-r) y (h+r)) $ do
     if r>=5
-    then do
-        SDL.filledCircle surf (round x) (round y) (round r) darkerColor
-        SDL.aaCircle surf (round x) (round y) (round r) darkerColor
+    then void $ do
+        SDL.filledCircle surf (round x) (round y) (round r) borderColor
+        SDL.aaCircle surf (round x) (round y) (round r) borderColor
         SDL.filledCircle surf (round x) (round y) (round r - border) color
         SDL.aaCircle surf (round x) (round y) (round r - border) color
-        
         -- ~ nameS <- SDLTTF.renderTextSolid (view camFonts cam) (view bolName b)
                         -- ~ (SDL.Color 255 255 255)
-
         -- ~ SDL.blitSurface nameS Nothing surf (Just $ SDL.Rect (round $ x-r/2) (round $ y-r/2) (round $ x+r/2) (round $ y+r/2))
-    else SDL.filledCircle surf (round x) (round y) (round r) color
+    else void $ SDL.filledCircle surf (round x) (round y) (round r) color
     where (x, y) = toScreenV cam (view bolPos b)
+          (w, h) = tmap fromIntegral (view camSize cam)
           r = max 1 (toScreen cam (getRadio b))
-          border = round $ toScreen cam 0.35
+          border = round $ toScreen cam 0.5
           color = view bolColor b
-          darkerColor = let (r, g, b) = getColor color
-                            val = 30
-                            positive = max val
-                        in rgbColor (positive r-val) (positive g-val) (positive b-val)
-
-clampCircle :: WorldConsts -> Double -> Vector -> Vector
-clampCircle w r (x, y) = let (wx, wy) = view worlSize w
-                         in (clamp r (wx-r) x, clamp r (wy-r) y)
-
-clamp :: Ord a => a -> a -> a -> a
-clamp mn mx = max mn . min mx
+          borderColor = let (r, g, b) = getRgb color
+                            darker c = round $ 0.9 * fromIntegral c
+                        in rgb (darker r) (darker g) (darker b)
+          isInRange lo x hi = lo<=x && x<= hi 
+          
     
 mkBolaVec :: Bola -> Vector -> Vector
 mkBolaVec b v =  speedConstant *^ normalized ^/ mass
@@ -116,21 +112,24 @@ collideBola others me = if any (eats me) others
 --------------------------------------------------------------------------------
 renderBackground :: WorldConsts -> SDL.Surface -> Camera -> IO ()
 renderBackground wc surf cam = void $ do
-    -- ~ SDL.rectangle surf (SDL.Rect (round x1) (round y1) (round x2) (round y2)) lineColor
-    SDL.fillRect surf (Just $ SDL.Rect (round x1) (round y1) (round $ x2-x1) (round $ y2-y1)) backColor
+    SDL.fillRect surf (Just $ SDL.Rect x1 y1 (w+1) (h+1)) backColor
     when (separation>4) $ do
-        drawLines (\y -> SDL.hLine surf (round x1) (round x2) (round y) lineColor) y1' (min vy y2) separation
-        drawLines (\x -> SDL.vLine surf (round x) (round y1) (round y2) lineColor) x1' (min vx x2) separation
-    where (x1, y1) = toScreenV cam (0, 0)
-          (x1', y1') = (x1, y1)
-          (x2, y2) = toScreenV cam (view worlSize wc)
-          (vx, vy) = view camSize cam
-          lineColor = rgbColor 216 224 228
-          backColor = rgbColor 242 251 255
-          separation = let wx = fst $ view worlSize wc :: Double
-                           divs = round $ wx / 3 :: Int
+        drawLines (\y -> SDL.hLine surf (fromIntegral x1) (fromIntegral x2) (round y) lineColor)
+            (correct y1') (fromIntegral $ min vy y2) separation
+        drawLines (\x -> SDL.vLine surf (round x) (fromIntegral y1) (fromIntegral y2) lineColor)
+            (correct x1') (fromIntegral $ min vx x2) separation
+    where lineColor = SDL.Pixel 0xe3ebefff
+          backColor = SDL.Pixel 0xf2fbffff
+          (vx, vy) =  view camSize cam
+          (x1', y1') = toScreenV cam (0, 0)
+          (x2', y2') = toScreenV cam (view worlSize wc)
+          (x1, y1) = (round x1', round y1')
+          (w, h) = (round $ x2'-x1', round $ y2'-y1')
+          (x2, y2) = (x1+w, y1+h)
+          separation = let wx = fst $ view worlSize wc
+                           divs = round $ wx / 3
                        in  toScreen cam (wx/fromIntegral divs)
-          drawLines f p lim step | p >= lim+0.1 = return ()
-                                 | otherwise = do f p
-                                                  drawLines f (p+step) lim step
+          correct x = x + separation * max 0 (fromIntegral $ floor $ -x/separation)
+          drawLines f p lim step | p >= lim = return ()
+                                 | otherwise = f p >> drawLines f (p+step) lim step
 

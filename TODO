@@ -2,11 +2,14 @@
 
 - aregar comida
 
--velocidad/fps/tiempo ?
-
--prefab more functions
-
--get "random" color
+-prefab more functions (move tantos casilleros)
 
 -draw name on bolas
 
+-slow growth when absorving
+
+-inhibit when more input (eliminate accums)
+
+-world const as variable with time
+
+-better setup interface

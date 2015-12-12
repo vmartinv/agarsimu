@@ -21,7 +21,8 @@ module AgarSimu.Utils
       runAnimation,
       
       -- * Environment generator
-      mkEnvs
+      mkEnvs,
+      clamp
     )
     where
 
@@ -93,3 +94,7 @@ mkEnvs :: [a] -> [[a]]
 mkEnvs xs = mkEnvs' [] xs
   where mkEnvs' izq [] = []
         mkEnvs' izq (x:der) = (izq++der):mkEnvs' (x:izq) der
+        
+
+clamp :: Ord a => a -> a -> a -> a
+clamp mn mx = max mn . min mx
