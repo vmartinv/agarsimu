@@ -19,6 +19,7 @@ import Data.VectorSpace ((^+^), (^-^), normalized, magnitude, (*^), (^/))
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Primitives as SDL
 import qualified Graphics.UI.SDL.Framerate as Framerate
+import qualified Graphics.UI.SDL.TTF as SDLTTF
 import AgarSimu.PublicEntities
 import AgarSimu.Entities
 import AgarSimu.Utils
@@ -31,10 +32,13 @@ defFPS = 60
 runSimulation :: WorldConsts -> Scene -> IO ()
 runSimulation wc scene = SDL.withInit [SDL.InitEverything] $ do
         screen <- SDL.setVideoMode x y 0 [SDL.SWSurface]--, SDL.Fullscreen]
+        SDLTTF.init
+        font <- SDLTTF.openFont "AmaticSC-Regular.ttf" 15
+        let cam = defCam wc font
         frameRate <- Framerate.new
         Framerate.init frameRate
         Framerate.set frameRate defFPS
-        let inputwire = inputLogic wc
+        let inputwire = inputLogic cam
         g <- getStdGen
         let gamewire = delRandom g (gameLogic wc scene)
         let renderwire = renderLogic frameRate wc screen
@@ -42,32 +46,33 @@ runSimulation wc scene = SDL.withInit [SDL.InitEverything] $ do
                 camera <- inputwire -< x
                 frame <- gamewire -< x
                 renderwire -< (camera, frame)
-        testWireM id (countSession_ 0.01) (pure () . mainwire)
+        runAnimation id (countSession_ 0.005) mainwire
     where (ais, players) = unzip scene
           (x,y) = view worlWindowSize wc
           speed = view worlSpeed wc
 
 gameLogic :: WorldConsts -> Scene -> RandomWire a [Bola]
-gameLogic wc scene = proc oldBolas -> do
+gameLogic wc scene = proc _ -> do
         rec
-            oldBolas <- delay (map snd scene) -< bolas
-            let envs = zip oldBolas (mkEnvs oldBolas)
-            bolas <- aiswire -< map (\(m,o)-> (wc, m, o)) envs
+            oldBolas <- delay inits -< bolas
+            -- ~ bolas <- aiswire -< replicate (length oldBolas) []
+            bolas <- aiswire -< mkEnvs oldBolas
         returnA -< bolas
-    where aiswire = combine $ map bolaLogic scene
+    where aiswire = combine $ map (bolaLogic wc) scene
+          inits = map snd scene
 
-mkEnvs :: [a] -> [[a]]
-mkEnvs xs = mkEnvs' [] xs
-  where mkEnvs' izq [] = []
-        mkEnvs' izq (x:der) = (izq++der):mkEnvs' (x:izq) der
-
-bolaLogic :: (AI, Bola) -> RandomWire Environment Bola
-bolaLogic (ai, init) = mkSF_ fromJust . when (isJust) . proc (wc, yo, otros) -> do
-        v <- ai -< (wc, yo, otros)
-        pos <- integralVecWith clampW initV -< (mkBolaVec yo v, (wc, getRadio yo))
-        let collBola = collideBola otros yo
-        let movedBola = fmap (set bolPos pos) collBola
-        returnA -< movedBola
+        
+bolaLogic :: WorldConsts -> (AI, Bola) -> RandomWire [Bola] Bola
+bolaLogic wc (ai, init) = proc (otros) -> do
+        rec
+            oldYo <- delay init -< yo
+            yo' <- mkSF_ (fromJust) . when (isJust) -< collideBola otros oldYo
+            -- ~ yo' <- returnA -< oldYo
+            v <- ai -< (wc, yo', otros)
+            let v' = mkBolaVec yo' v
+            pos <- integralVecWith clampW initV -< (v', (wc, getRadio yo'))
+            yo <- returnA -< set bolPos pos yo'
+        returnA -< yo
     where initV = view bolPos init
           clampW (wc, r) v = clampCircle wc r v
 
@@ -94,16 +99,15 @@ renderLogic frameRate wc screen = proc frame -> do
             then renderFrame -< frame
             else returnA -< ()
     where renderFrame = mkGen_' $ \(cam, bolas) -> do
-            SDL.mapRGB (SDL.surfaceGetPixelFormat screen) 100 100 100 >>=
+            SDL.mapRGB (SDL.surfaceGetPixelFormat screen) 242 251 255 >>=
                 SDL.fillRect screen Nothing
+            renderBackground wc screen cam
             mapM (renderBola screen cam) bolas
-            renderBorderBox wc screen cam
             SDL.flip screen
             Framerate.delay frameRate
-            return ()
 
-inputLogic :: (Monoid s, Monoid e) => WorldConsts -> Wire s e IO a Camera
-inputLogic w = addMonad (accumOutput SDL.NoEvent (mouseCam (defCam w))) . readEvents
+inputLogic :: (Monoid s, Monoid e) => Camera -> Wire s e IO a Camera
+inputLogic cam = addMonad (accumOutput SDL.NoEvent (mouseCam cam)) . readEvents
 
 mouseCam :: Monoid e => Camera -> WireP s e SDL.Event Camera                           
 mouseCam init = proc event -> do

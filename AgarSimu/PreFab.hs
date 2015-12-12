@@ -9,10 +9,11 @@ module AgarSimu.PreFab
     ( -- * Random
       randomW,
       randomWR,    
-      randomAI,
+      randomDir,
 
       -- * Basic Wires 
-      go    
+      go,    
+      stop    
     )
     where
 
@@ -28,8 +29,11 @@ randomW = mkGen_' $ const getRandom
 randomWR :: (MonadRandom m, Random b) => Wire s e m (b, b) b
 randomWR = mkGen_' $ getRandomR
 
-randomAI :: AI
-randomAI = go . randomWR . pure (-pi, pi)
+randomDir :: RandomWire a Vector
+randomDir = go . randomWR . pure (-pi, pi)
 
 go :: RandomWire Double Vector
 go = arr sin &&& arr cos
+
+stop :: RandomWire a Vector
+stop = pure (0, 0)

@@ -8,12 +8,13 @@
 module AgarSimu.PublicEntities
     ( -- * Base
       rgbColor,
+      getColor,
       Vector,
       
       -- * World
       WorldConsts(..),
       mkWorldConsts,
-      worlSize, worlWindowSize, worlSpeed,
+      worlSize, worlWindowSize, worlSpeed, worlStep,
       
       -- * Bola
       Bola(..),
@@ -33,7 +34,7 @@ import Control.Lens hiding (at, perform, wrapped)
 import Data.Maybe
 import Control.Wire
 import Control.Monad.Random
-import Data.Word (Word8)
+import Data.Word (Word8, Word32)
 import Data.AffineSpace (distance)
 import qualified Graphics.UI.SDL as SDL (Pixel(..))
 import AgarSimu.Utils
@@ -42,17 +43,22 @@ rgbColor :: Word8 -> Word8 -> Word8 -> SDL.Pixel
 rgbColor r g b = let fi = fromIntegral
                   in SDL.Pixel (fi r *2^24 + fi g*2^16 + fi b*2^8 + 255)
 
+getColor :: SDL.Pixel -> (Word8, Word8, Word8)
+getColor (SDL.Pixel p) = (md $ p `div` 2^24, md $ p `div` 2^16, md $ p `div` 2^8)
+    where md b = fromIntegral (b `mod` (2^8))
+
 type Vector = (Double, Double)
 
 --------------------------------------------------------------------------------
 data WorldConsts = WorldConsts { _worlSize :: Vector
                                , _worlWindowSize :: (Int, Int)
                                , _worlSpeed :: Int
+                               , _worlStep :: NominalDiffTime
                                } deriving Show
 $(makeLenses ''WorldConsts)
 
-mkWorldConsts :: Maybe Vector -> Maybe (Int, Int) -> Maybe Int -> WorldConsts
-mkWorldConsts v ws t = WorldConsts (v//(100, 100)) (ws//(400, 400)) (t//1)
+mkWorldConsts :: Maybe Vector -> Maybe (Int, Int) -> Maybe Int -> Maybe NominalDiffTime -> WorldConsts
+mkWorldConsts v ws t s = WorldConsts (v//(100, 100)) (ws//(400, 400)) (t//1) (s//0.1)
     where (//) = flip fromMaybe
 
 --------------------------------------------------------------------------------

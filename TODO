@@ -2,12 +2,11 @@
 
 - aregar comida
 
-- fondo a cuadros
-
 -velocidad/fps/tiempo ?
 
 -prefab more functions
 
 -get "random" color
 
--draw bolas with nice borders
+-draw name on bolas
+

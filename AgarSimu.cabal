@@ -26,7 +26,7 @@ library
   exposed-modules:     AgarSimu, AgarSimu.Core, AgarSimu.PublicEntities, AgarSimu.PreFab 
   other-modules:       AgarSimu.Utils, AgarSimu.Entities
   other-extensions:    Arrows, StandaloneDeriving, TemplateHaskell
-  build-depends:       netwire >=5.0 && <5.1, SDL-gfx, SDL, vector-space, lens, MonadRandom, containers, base
+  build-depends:       netwire >=5.0 && <5.1, SDL-ttf, SDL-gfx, SDL, vector-space, lens, MonadRandom, containers, base
   default-language:    Haskell2010
 
 Test-Suite agarsimu-tests

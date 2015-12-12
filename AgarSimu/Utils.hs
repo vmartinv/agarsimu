@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE ExistentialQuantification, RankNTypes #-}
 -- |
 -- Module:     AgarSimu.Utils
 -- Copyright:  (c) 2015 Martin Villagra
@@ -13,8 +14,14 @@ module AgarSimu.Utils
       addMonad,
       delRandom,
       
-      -- * Specialized Wire
-      accumOutput
+      -- * Specialized Wires
+      accumOutput,
+      
+      -- * General Wire Runner
+      runAnimation,
+      
+      -- * Environment generator
+      mkEnvs
     )
     where
 
@@ -25,6 +32,7 @@ import Control.Monad.Fix (MonadFix)
 import Control.Wire
 import Control.Wire.Unsafe.Event
 import Control.Monad.Random
+import Control.Monad.IO.Class
 
 mkGen_' :: Monad m => (a -> m b) -> Wire s e m a b
 mkGen_' f = let f' x = fmap Right (f x)
@@ -42,13 +50,7 @@ combine ws = mkGen $ \dt xs -> do
         res <- mapM stepper (zip ws xs)
         let (outputs, ws') = unzip $ filter (isRight.fst) res
         return (Right (rights outputs), combine ws')
-        
--- ~ multicast :: (Monad m, Monoid s)
-    -- ~ => [Wire s e m a b] -> Wire s e m a [b]
--- ~ multicast ws = mkGen $ \dt x -> do
-        -- ~ res <- mapM (\w -> stepWire w dt (Right x)) ws
-        -- ~ let (outputs, ws') = unzip $ filter (isRight.fst) res
-        -- ~ return (Right (rights outputs), multicast ws')
+
         
 addMonad :: Monad m => WireP s e a b -> Wire s e m a b
 addMonad = mapWire $ return.runIdentity
@@ -69,3 +71,25 @@ accumOutput empty = loop
                           [] -> stepper empty
                           (x:xs) -> foldl folder (stepper x) xs
             return (y, loop w'')
+            
+-- | This function runs the given wire using the given state delta
+-- generator. Press Ctrl-C to abort.
+
+runAnimation ::
+    (Monad m', MonadIO m)
+    => (forall a. m' a -> m a)
+    -> Session m s
+    -> (forall a. Wire s e m' a b)
+    -> m c
+runAnimation run s0 w0 = loop s0 w0
+    where
+    loop s' w' = do
+        (ds, s) <- stepSession s'
+        (mx, w) <- run (stepWire w' ds (Right ()))
+        loop s w
+
+
+mkEnvs :: [a] -> [[a]]
+mkEnvs xs = mkEnvs' [] xs
+  where mkEnvs' izq [] = []
+        mkEnvs' izq (x:der) = (izq++der):mkEnvs' (x:izq) der
