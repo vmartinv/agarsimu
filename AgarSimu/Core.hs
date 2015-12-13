@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE StandaloneDeriving #-}
 -- Module:     AgarSimu.Core
 -- Copyright:  (c) 2015 Martin Villagra
 -- License:    BSD3
@@ -15,33 +16,33 @@ import qualified Prelude
 import Control.Lens hiding (at, perform, wrapped)
 import Control.Monad (void)
 import Control.Wire
+import Control.Wire.Switch
 import FRP.Netwire
 import Data.VectorSpace ((^+^), (^-^), normalized, magnitude, (*^), (^/))
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Primitives as SDL
 import qualified Graphics.UI.SDL.Framerate as Framerate
-import qualified Graphics.UI.SDL.TTF as SDLTTF
 import AgarSimu.PublicEntities
 import AgarSimu.Entities
 import AgarSimu.Utils
 import AgarSimu.PreFab
 import Data.Maybe
 import Control.Monad.Random
-
+import Control.Wire.Unsafe.Event
 defFPS :: Num a => a
 defFPS = 60
 
+deriving instance Show a => Show (Event a)
 runSimulation :: WorldConsts -> Scene -> IO ()
 runSimulation wc scene = SDL.withInit [SDL.InitEverything] $ do
         screen <- SDL.setVideoMode x y 0 [SDL.SWSurface]--, SDL.Fullscreen]
-        SDLTTF.init
-        font <- SDLTTF.openFont "AmaticSC-Regular.ttf" 15
-        let cam = defCam wc font
+        let cam = defCam wc
         frameRate <- Framerate.new
         Framerate.init frameRate
         Framerate.set frameRate defFPS
         let inputwire = inputLogic cam
         g <- getStdGen
+        -- ~ let testwire = delRandom g (holdFor 1. wackelkontakt' 0.5 0.1 . pure 3)
         let gamewire = delRandom g (gameLogic wc scene)
         let renderwire = renderLogic frameRate wc screen
         let mainwire = proc x -> do
@@ -49,23 +50,17 @@ runSimulation wc scene = SDL.withInit [SDL.InitEverything] $ do
                 frame <- gamewire -< x
                 renderwire -< (camera, frame)
         runAnimation id (countSession_ $ 1/defFPS) mainwire
+        -- ~ testWireM id (clockSession_) testwire
     where (ais, players) = unzip scene
           (x,y) = view worlWindowSize wc
           speed = view worlSpeed wc
 
 
-withProbability :: Double -> RandomWire a a
-withProbability p = fmap snd $ (when (<p) . randomWR . pure (0, 1) &&& id)
+-- ~ wackelkontakt' :: NominalDiffTime -> Double -> RandomWire a (Event a)
+-- ~ wackelkontakt' t p = mkSF_ (\(ev, x)->fmap (const x) ev) . (filterE (<p) . periodic t . randomProb &&& id)
+        -- ~ where randomProb :: RandomWire a Double
+              -- ~ randomProb = randomWR . pure (0, 1)
     
-
-genFood :: WorldConsts -> RandomWire a (RandomWire [Bola] Bola)
-genFood wc = fmap creator (randomWColor &&& randomWPos ws)
-    where ws = view worlSize wc
-          randomWPos ws = randomWR . pure (0, fst ws) &&& randomWR . pure (0, snd ws)
-          randomWColor = mkGen_' $ const randomColor
-          randomWPos :: Vector -> RandomWire a Vector
-          creator (col, pos) = comidaLogic $ Bola "" col pos 1
-
 comidaLogic :: Bola -> RandomWire [Bola] Bola
 comidaLogic init = pure init . when (isJust) . mkSF_ (flip collideBola init)
 
@@ -74,17 +69,16 @@ gameLogic wc scene = proc _ -> do
         rec
             oldBolas <- delay inits -< bolas
             oldComida <- delay [] -< comida
+            
             bolas <- aiswire -< map (++oldComida) (mkEnvs oldBolas)
-            
-            news <- withProbability prob . (fmap (:[]) (genFood wc)) <|> pure [] -< ()
-            comida <- foodwire -< (oldBolas, news)
-            
+            comida <- foodwire . (id &&& genFood) -< oldBolas
         returnA -< bolas++comida
-    where inits = map snd scene
+    where (wx, wy) = view worlSize wc
+          inits = map snd scene
           aiswire = combine $ map (bolaLogic wc) scene
-          foodwire = multicastGrow [] :: RandomWire ([Bola], [RandomWire [Bola] Bola]) [Bola]
-          prob = let (wx, wy) = view worlSize wc
-                 in 0.00001 * wx * wy
+          foodwire = dynMulticast [] 
+          genFood = periodic prob . fmap comidaLogic (mkConst' (randomBola (wx, wy) 1))
+          prob = realToFrac $ 1/(0.0005 *  wx * wy)
 
 
 bolaLogic :: WorldConsts -> (AI, Bola) -> RandomWire [Bola] Bola
@@ -113,9 +107,7 @@ integralVecWith :: HasTime t s
     -> Vector                   -- ^ Integration constant (aka start value).
     -> Wire s e m (Vector, w) Vector
 integralVecWith correct = loop
-    where
-    loop x' =
-        mkPure $ \ds (dx, w) ->
+    where loop x' = mkPure $ \ds (dx, w) ->
             let dt = realToFrac (dtime ds)
                 x  = correct w (x' ^+^ dt*^dx)
             in x' `seq` (Right x', loop x)

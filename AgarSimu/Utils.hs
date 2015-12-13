@@ -11,7 +11,8 @@ module AgarSimu.Utils
       mkGen_',
       addFeedBack,
       combine,
-      multicastGrow,
+      multicast,
+      dynMulticast,
       addMonad,
       delRandom,
       
@@ -56,6 +57,17 @@ combine ws = mkGen $ \dt xs -> do
         let (outputs, ws') = unzip $ filter (isRight.fst) res
         return (Right (rights outputs), combine ws')
 
+multicast :: (Monad m, Monoid s) => [Wire s e m a b] -> Wire s e m a [b]
+multicast ws = mkGen $ \dt x -> do
+            res <- mapM (\w -> stepWire w dt (Right x)) ws
+            let (outputs, ws') = unzip $ filter (isRight.fst) res
+            return (Right (rights outputs), multicast $ ws')
+
+dynMulticast :: (Monad m, Monoid s, Monoid e) => [Wire s e m a b] -> Wire s e m (a, Event (Wire s e m a b)) [b]
+dynMulticast ws = ((krSwitch.multicast) ws). second (mkSF_ (fmap addWire))
+    where addWire :: (Monad m, Monoid s, Monoid e) => Wire s e m a b -> Wire s e m a [b] -> Wire s e m a [b]
+          addWire w ws = fmap (uncurry (:)) (w &&& ws) --> ws
+            
 -- | Dynamic set of wires. Wires are created with the second input
 -- Wires that inhibit are deleted
 multicastGrow :: (Monad m, Monoid s) => [Wire s e m a b] -> Wire s e m (a, [Wire s e m a b]) [b]

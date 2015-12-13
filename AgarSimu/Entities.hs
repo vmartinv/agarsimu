@@ -32,7 +32,6 @@ import Data.VectorSpace ((^+^), (^-^), magnitude, (*^), (^/))
 import Data.AffineSpace (distance)
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Primitives as SDL
-import qualified Graphics.UI.SDL.TTF as SDLTTF
 import AgarSimu.PublicEntities
 
 
@@ -42,7 +41,6 @@ tmap f (x, y) = (f x, f y)
 data Camera = Camera { _camPos :: Vector
                      , _camZoom :: Double
                      , _camSize :: (Int, Int)
-                     , _camFonts :: SDLTTF.Font
                      } deriving Show
 $(makeLenses ''Camera)
 
@@ -56,8 +54,8 @@ camZoomOut cam = over camZoom (*0.9) cam
 camMove :: Camera -> Vector -> Camera      
 camMove cam v = over camPos (^-^ v ^/ (view camZoom cam)) cam
     
-defCam :: WorldConsts -> SDLTTF.Font -> Camera
-defCam w fonts = Camera (wx/2, wy/2) scale (vx', vy') fonts
+defCam :: WorldConsts -> Camera
+defCam w = Camera (wx/2, wy/2) scale (vx', vy')
     where (wx, wy) = view worlSize w
           (vx', vy') = view worlWindowSize w
           (vx, vy) = (fromIntegral vx', fromIntegral vy')
@@ -78,9 +76,6 @@ renderBola surf cam b =  when (r>=2 && isInRange (-r) x (w+r) && isInRange (-r) 
         SDL.aaCircle surf (round x) (round y) (round r) borderColor
         SDL.filledCircle surf (round x) (round y) (round r - border) color
         SDL.aaCircle surf (round x) (round y) (round r - border) color
-        -- ~ nameS <- SDLTTF.renderTextSolid (view camFonts cam) (view bolName b)
-                        -- ~ (SDL.Color 255 255 255)
-        -- ~ SDL.blitSurface nameS Nothing surf (Just $ SDL.Rect (round $ x-r/2) (round $ y-r/2) (round $ x+r/2) (round $ y+r/2))
     else void $ do
         SDL.filledCircle surf (round x) (round y) (round r) color
         SDL.aaCircle surf (round x) (round y) (round r) color
@@ -96,11 +91,11 @@ renderBola surf cam b =  when (r>=2 && isInRange (-r) x (w+r) && isInRange (-r) 
           
     
 mkBolaVec :: Bola -> Vector -> Vector
-mkBolaVec b v =  speedConstant *^ normalized ^/ mass
-    where mass = view bolMass b
+mkBolaVec b v = speedConstant *^ normalized ^/ r
+    where r = getRadio b
           normalized = let m = magnitude v
                        in if m>1 then v^/m else v
-          speedConstant = 10*45
+          speedConstant = 100
 
 collideBola :: [Bola] -> Bola -> Maybe Double
 collideBola others me = if any (eats me) others
@@ -109,7 +104,7 @@ collideBola others me = if any (eats me) others
                              in Just $ foldl (+) 0 eaten
         where a `eats` b = let s = getRadio b + getRadio a
                                prop = view bolMass b / view bolMass a
-                           in prop > 1.1 && distBolas a b < 0.9*s
+                           in prop > 1.1 && distBolas a b - getRadio a < 0.9*getRadio b
 
 --------------------------------------------------------------------------------
 renderBackground :: WorldConsts -> SDL.Surface -> Camera -> IO ()

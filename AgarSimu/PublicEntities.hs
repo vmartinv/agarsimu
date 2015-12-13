@@ -19,11 +19,13 @@ module AgarSimu.PublicEntities
       
       -- * Bola
       Bola(..),
-      bolName, bolColor, bolPos, bolMass,
+      bolColor, bolPos, bolMass,
       getRadio,
       distBolas,
+      randomBola,
       
       -- * Base Types
+      Time,
       Environment,
       RandomWire,
       AI,
@@ -70,8 +72,7 @@ mkWorldConsts v ws t = WorldConsts (v//(100, 100)) (ws//(400, 400)) (t//1)
     where (//) = flip fromMaybe
 
 --------------------------------------------------------------------------------
-data Bola = Bola { _bolName :: String
-                 , _bolColor :: SDL.Pixel
+data Bola = Bola { _bolColor :: SDL.Pixel
                  , _bolPos :: Vector
                  , _bolMass :: Double
                  } deriving Show
@@ -83,6 +84,11 @@ getRadio b = sqrt $ (view bolMass b)/pi
 distBolas :: Bola -> Bola -> Double
 distBolas p q = distance (view bolPos p) (view bolPos q)
 
+randomBola :: MonadRandom m => (Double, Double) -> Double -> m Bola
+randomBola (wx, wy) m = do col <- randomColor
+                           x <- getRandomR (0, wx)
+                           y <- getRandomR (0, wy)
+                           return $ Bola col (x, y) m
 --------------------------------------------------------------------------------
 type Time = NominalDiffTime
 type Environment = (Vector, Bola, [Bola])
