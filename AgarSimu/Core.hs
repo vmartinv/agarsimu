@@ -15,6 +15,7 @@ import qualified Prelude
 import Control.Lens hiding (at, perform, wrapped)
 import Control.Monad (void)
 import Control.Wire
+import FRP.Netwire
 import Data.VectorSpace ((^+^), (^-^), normalized, magnitude, (*^), (^/))
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Primitives as SDL
@@ -23,6 +24,7 @@ import qualified Graphics.UI.SDL.TTF as SDLTTF
 import AgarSimu.PublicEntities
 import AgarSimu.Entities
 import AgarSimu.Utils
+import AgarSimu.PreFab
 import Data.Maybe
 import Control.Monad.Random
 
@@ -47,26 +49,56 @@ runSimulation wc scene = SDL.withInit [SDL.InitEverything] $ do
                 frame <- gamewire -< x
                 renderwire -< (camera, frame)
         runAnimation id (countSession_ $ 1/defFPS) mainwire
-        -- ~ runAnimation id (countSession_ 0.05) mainwire
     where (ais, players) = unzip scene
           (x,y) = view worlWindowSize wc
           speed = view worlSpeed wc
+
+
+withProbability :: Double -> RandomWire a a
+withProbability p = fmap snd $ (when (<p) . randomWR . pure (0, 1) &&& id)
+    
+
+genFood :: WorldConsts -> RandomWire a (RandomWire [Bola] Bola)
+genFood wc = fmap creator (randomWColor &&& randomWPos ws)
+    where ws = view worlSize wc
+          randomWPos ws = randomWR . pure (0, fst ws) &&& randomWR . pure (0, snd ws)
+          randomWColor = mkGen_' $ const randomColor
+          randomWPos :: Vector -> RandomWire a Vector
+          creator (col, pos) = comidaLogic $ Bola "" col pos 1
+
+comidaLogic :: Bola -> RandomWire [Bola] Bola
+comidaLogic init = pure init . when (isJust) . mkSF_ (flip collideBola init)
 
 gameLogic :: WorldConsts -> Scene -> RandomWire a [Bola]
 gameLogic wc scene = proc _ -> do
         rec
             oldBolas <- delay inits -< bolas
-            bolas <- aiswire -< mkEnvs oldBolas
-        returnA -< bolas
-    where aiswire = combine $ map (bolaLogic wc) scene
-          inits = map snd scene
+            oldComida <- delay [] -< comida
+            bolas <- aiswire -< map (++oldComida) (mkEnvs oldBolas)
+            
+            news <- withProbability prob . (fmap (:[]) (genFood wc)) <|> pure [] -< ()
+            comida <- foodwire -< (oldBolas, news)
+            
+        returnA -< bolas++comida
+    where inits = map snd scene
+          aiswire = combine $ map (bolaLogic wc) scene
+          foodwire = multicastGrow [] :: RandomWire ([Bola], [RandomWire [Bola] Bola]) [Bola]
+          prob = let (wx, wy) = view worlSize wc
+                 in 0.00001 * wx * wy
 
-        
+
 bolaLogic :: WorldConsts -> (AI, Bola) -> RandomWire [Bola] Bola
 bolaLogic wc (ai, init) = proc (otros) -> do
         rec
             oldYo <- delay init -< yo
-            yo' <- mkSF_ (fromJust) . when (isJust) -< collideBola otros oldYo
+            --Update Mass
+            oldRealMass <- delay (view bolMass init) -< realMass
+            increment <- mkSF_ (fromJust) . when (isJust) -< collideBola otros oldYo
+            realMass <- returnA -< oldRealMass+increment
+            varMass <- integralWith min (view bolMass init) -< (realMass, realMass)
+            let yo' = set bolMass varMass oldYo
+
+            --Update Position
             v <- ai -< ((wx, wy), yo', otros)
             let v' = mkBolaVec yo' v
             pos <- integralVecWith clampCircle initV -< (v', getRadio yo')
@@ -137,3 +169,6 @@ readEvents = mkGen_' $ const (acum [])
                         case ev of
                             SDL.NoEvent -> return evs
                             _ -> acum (ev:evs)
+                            
+-- ~ readEvent :: Monoid e => Wire s e IO a SDL.Event
+-- ~ readEvent = mkGen_' $ const SDL.pollEvent

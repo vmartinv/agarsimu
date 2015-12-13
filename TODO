@@ -1,15 +1,14 @@
-- global wire runner
+- quit keys
+-inhibit when more input (eliminate accums)
+- control speed?
+    -world const as variable with time
 
-- aregar comida
 
--prefab more functions (move tantos casilleros)
+
+-prefab more functions (ej move tantos casilleros)
 
 -draw name on bolas
 
--slow growth when absorving
 
--inhibit when more input (eliminate accums)
-
--world const as variable with time
 
 -better setup interface

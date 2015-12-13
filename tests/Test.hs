@@ -14,9 +14,9 @@ testScene :: MonadRandom m => m Scene
 testScene = do
         rc <- randomColor
         rc2 <- randomColor
+        -- ~ return []
         return $ [(randomAI 0.2, Bola "Pablos"  (rgb 255 ((fromIntegral i)*90) 40) (10, ((fromInteger i)*10)) 10) | i <- [0..4]]
-         -- ~ ++ [(random 1, Bola "Martins"  (rgb 40 ((fromIntegral i)*80) 255) (35, (10+(fromInteger (i-2))*30)) 30)| i <- [2..3]]
-         ++ [(randomAI 1, Bola "Martins" rc (35, (10+(fromInteger (i-2))*30)) 30) | i <- [2..3]]
+         ++ [(randomAI 1, Bola "Martins"  (rgb 40 ((fromIntegral i)*80) 255) (35, (10+(fromInteger (i-2))*30)) 30)| i <- [2..3]]
 
 
 randomAI :: NominalDiffTime -> AI

@@ -11,6 +11,7 @@ module AgarSimu.Utils
       mkGen_',
       addFeedBack,
       combine,
+      multicastGrow,
       addMonad,
       delRandom,
       
@@ -39,12 +40,15 @@ mkGen_' :: Monad m => (a -> m b) -> Wire s e m a b
 mkGen_' f = let f' x = fmap Right (f x)
             in mkGen_ f'
 
+-- | Create a simple loop with a wire.
 addFeedBack :: (MonadFix m, Monad m) => a -> Wire s e m a a -> Wire s e m a' a
 addFeedBack init w = proc _ -> do
         rec input <- w . delay init -< input
         returnA -< input
     --or equivalently: loop (arr (\x->(x,x)) . w . delay init . arr snd)
 
+-- | Combine a list of wires. Supply input for each wire, get the outputs
+-- Wires that inhibit are deleted
 combine :: (Monad m, Monoid s) => [Wire s e m a b] -> Wire s e m [a] [b]
 combine ws = mkGen $ \dt xs -> do
         let stepper (w, x) = stepWire w dt (Right x)
@@ -52,7 +56,15 @@ combine ws = mkGen $ \dt xs -> do
         let (outputs, ws') = unzip $ filter (isRight.fst) res
         return (Right (rights outputs), combine ws')
 
-        
+-- | Dynamic set of wires. Wires are created with the second input
+-- Wires that inhibit are deleted
+multicastGrow :: (Monad m, Monoid s) => [Wire s e m a b] -> Wire s e m (a, [Wire s e m a b]) [b]
+multicastGrow ws = mkGen $ \dt (x,news) -> do
+            res <- mapM (\w -> stepWire w dt (Right x)) ws
+            let (outputs, ws') = unzip $ filter (isRight.fst) res
+            return (Right (rights outputs), multicastGrow $ ws' ++ news)
+
+
 addMonad :: Monad m => WireP s e a b -> Wire s e m a b
 addMonad = mapWire $ return.runIdentity
 
@@ -62,6 +74,8 @@ delRandom gen w = mkGen $ \dt x -> do
             let ((y, w'), gen') = runRand (stepWire w dt (Right x)) gen
             return (y, delRandom gen' w')
         
+-- | Steps a wire for each element in the input, return the last result.
+-- Inhibits: if the last result inhibits
 accumOutput :: (Monad m, Monoid s) => a -> Wire s e m a b -> Wire s e m [a] b
 accumOutput empty = loop
     where loop w = mkGen $ \dt inputs -> do
@@ -75,7 +89,6 @@ accumOutput empty = loop
             
 -- | This function runs the given wire using the given state delta
 -- generator. Press Ctrl-C to abort.
-
 runAnimation ::
     (Monad m', MonadIO m)
     => (forall a. m' a -> m a)
@@ -88,7 +101,6 @@ runAnimation run s0 w0 = loop s0 w0
         (ds, s) <- stepSession s'
         (mx, w) <- run (stepWire w' ds (Right ()))
         loop s w
-
 
 mkEnvs :: [a] -> [[a]]
 mkEnvs xs = mkEnvs' [] xs

@@ -71,8 +71,8 @@ toScreenV cam v = (toScreen cam x', toScreen cam y') ^+^ 0.5 *^ (tmap fromIntegr
 
 --------------------------------------------------------------------------------
 renderBola :: SDL.Surface -> Camera -> Bola -> IO ()
-renderBola surf cam b =  when (isInRange (-r) x (w+r) && isInRange (-r) y (h+r)) $ do
-    if r>=5
+renderBola surf cam b =  when (r>=2 && isInRange (-r) x (w+r) && isInRange (-r) y (h+r)) $ do
+    if r>=5 && view bolMass b >= 10
     then void $ do
         SDL.filledCircle surf (round x) (round y) (round r) borderColor
         SDL.aaCircle surf (round x) (round y) (round r) borderColor
@@ -81,10 +81,12 @@ renderBola surf cam b =  when (isInRange (-r) x (w+r) && isInRange (-r) y (h+r))
         -- ~ nameS <- SDLTTF.renderTextSolid (view camFonts cam) (view bolName b)
                         -- ~ (SDL.Color 255 255 255)
         -- ~ SDL.blitSurface nameS Nothing surf (Just $ SDL.Rect (round $ x-r/2) (round $ y-r/2) (round $ x+r/2) (round $ y+r/2))
-    else void $ SDL.filledCircle surf (round x) (round y) (round r) color
+    else void $ do
+        SDL.filledCircle surf (round x) (round y) (round r) color
+        SDL.aaCircle surf (round x) (round y) (round r) color
     where (x, y) = toScreenV cam (view bolPos b)
           (w, h) = tmap fromIntegral (view camSize cam)
-          r = max 1 (toScreen cam (getRadio b))
+          r = (toScreen cam (getRadio b))
           border = round $ toScreen cam 0.5
           color = view bolColor b
           borderColor = let (r, g, b) = getRgb color
@@ -98,13 +100,13 @@ mkBolaVec b v =  speedConstant *^ normalized ^/ mass
     where mass = view bolMass b
           normalized = let m = magnitude v
                        in if m>1 then v^/m else v
-          speedConstant = 10*25
+          speedConstant = 10*45
 
-collideBola :: [Bola] -> Bola -> Maybe Bola
+collideBola :: [Bola] -> Bola -> Maybe Double
 collideBola others me = if any (eats me) others
                         then Nothing
                         else let eaten = map (view bolMass) $ filter (flip eats me) others
-                             in Just $ over bolMass (+foldl (+) 0 eaten) me
+                             in Just $ foldl (+) 0 eaten
         where a `eats` b = let s = getRadio b + getRadio a
                                prop = view bolMass b / view bolMass a
                            in prop > 1.1 && distBolas a b < 0.9*s

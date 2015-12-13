@@ -42,11 +42,11 @@ import AgarSimu.Utils
 
 rgb :: Word8 -> Word8 -> Word8 -> SDL.Pixel
 rgb r g b = let fi = fromIntegral
-            in SDL.Pixel (fi r *2^24 + fi g*2^16 + fi b*2^8 + 255)
+            in SDL.Pixel (fi r *2^24 + fi g*2^16 + fi b*2^8 + 0xff)
 
 randomColor :: MonadRandom m => m SDL.Pixel
 randomColor = getRandomR (0, length colors - 1) >>= return.(colors !!)
-    where colors = map (SDL.Pixel.(2^8-1+).(2^8*))
+    where colors = map (SDL.Pixel.(+0xff).(2^8*))
             [0x07ffb0, 0x07ffb0, 0xe407ff, 0x9cff07, 0x5a07ff, 0x11ff07,
              0xff9307, 0xfeff07, 0xff071d, 0x07ffea, 0x17ff07, 0x8807ff,
              0xffbc07, 0xffd307, 0x7607ff, 0xd907ff, 0x1a07ff, 0x07a2ff,
