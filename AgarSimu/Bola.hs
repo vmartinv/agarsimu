@@ -7,11 +7,11 @@
 
 module AgarSimu.Bola
     ( -- * Wires
-      bolaLogic,
-      foodGenerator,
+      bolaLogic
+    , foodGenerator
       
        -- * Environment creator
-      mkEnvs
+    , mkEnvs
     )
     where
 
@@ -33,7 +33,7 @@ mkEnvs xs = mkEnvs' [] xs
 
 mkBolaVec :: Bola -> Vector -> Vector
 mkBolaVec b v = speedConstant *^ normalized ^/ r
-    where r = massToRadio (view bolMass b)
+    where r = bolRadio b
           normalized = let m = magnitude v
                        in if m>1 then v^/m else v
           speedConstant = 50
@@ -42,11 +42,9 @@ collideBola :: [Bola] -> Bola -> Maybe Double
 collideBola others me = if any (eats me) others
                         then Nothing
                         else let eaten = map (view bolMass) $ filter (flip eats me) others
-                             in Just $ foldl (+) 0 eaten
-        where a `eats` b = let ra = massToRadio (view bolMass a)
-                               rb = massToRadio (view bolMass b)
-                               prop = view bolMass b / view bolMass a
-                           in prop > 1.1 && distBolas a b - ra < rb
+                             in Just (sum eaten)
+        where a `eats` b = let prop = view bolMass b / view bolMass a
+                           in prop > 1.1 && distBolas a b <= bolRadio b
 
 --------------------------------------------------------------------------------
 bolaLogic :: WorldConsts -> (AI, Bola) -> RandomWire [Bola] Bola
@@ -63,7 +61,7 @@ bolaLogic wc (ai, init) = proc (otros) -> do
             --Update Position
             v <- ai -< ((wx, wy), yo', otros)
             let v' = mkBolaVec yo' v
-            pos <- integralVecWith clampCircle initV -< (v', massToRadio (view bolMass yo'))
+            pos <- integralVecWith clampCircle initV -< (v', bolRadio yo')
             yo <- returnA -< set bolPos pos yo'
         returnA -< yo
     where initV = view bolPos init

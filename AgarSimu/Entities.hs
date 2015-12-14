@@ -7,8 +7,8 @@
 
 module AgarSimu.Entities
     ( -- * Bola
-      mkBolaVec,
-      collideBola,
+      mkBolaVec
+    , collideBola
     )
     where
 

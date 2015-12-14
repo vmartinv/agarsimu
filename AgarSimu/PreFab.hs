@@ -6,16 +6,16 @@
 
 module AgarSimu.PreFab
     ( -- * Wire constructor
-      mkConstM,
+      mkConstM
       
       -- * Random
-      randomW,
-      randomWR,    
-      randomDir,
+    , randomW
+    , randomWR
+    , randomDir
 
       -- * Basic Wires 
-      go,    
-      stop    
+    , go 
+    , stop    
     )
     where
 

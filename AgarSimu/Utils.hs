@@ -8,21 +8,21 @@
 
 module AgarSimu.Utils
     ( -- * Wire Transformers
-      mkGen_',
-      addFeedBack,
-      combine,
-      multicast,
-      dynMulticast,
-      foldlWire,
-      addMonad,
-      delRandom,
+      mkGen_'
+    , addFeedBack
+    , combine
+    , multicast
+    , dynMulticast
+    , foldlWire
+    , addMonad
+    , delRandom
             
       -- * General Wire Runner
-      runWire,
+    , runWire
       
       -- * Miscellaneous
-      clamp,
-      tmap
+    , clamp
+    , tmap
     )
     where
 

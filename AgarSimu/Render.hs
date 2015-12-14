@@ -9,14 +9,14 @@
 
 module AgarSimu.Render
     ( -- * Camera
-      Camera (..),
-      camZoomIn,
-      camZoomOut,
-      camMove,
+      Camera (..)
+    , camZoomIn
+    , camZoomOut
+    , camMove
       
       -- * Rendering
-      withPrepareRendering,      
-      renderLogic      
+    , withPrepareRendering  
+    , renderLogic      
     )
     where
 
@@ -26,7 +26,7 @@ import Data.VectorSpace ((^+^), (^-^), magnitude, (*^), (^/))
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Primitives as SDL
 import qualified Graphics.UI.SDL.Framerate as Framerate
-import Control.Wire
+import Control.Wire hiding ((.))
 import AgarSimu.PublicEntities
 import AgarSimu.Utils
 
@@ -64,7 +64,10 @@ toScreen cam x = x * (view camZoom cam)
 toScreenV :: Camera -> Vector -> Vector
 toScreenV cam v = (toScreen cam x', toScreen cam y') ^+^ 0.5 *^ (tmap fromIntegral (view camSize cam))
     where (x', y') = v ^-^ (view camPos cam)
-    
+
+
+drawCam :: Camera -> (SDL.Surface -> a) -> a
+drawCam cam f = f (view camSurf cam)
 --------------------------------------------------------------------------------
 withPrepareRendering :: WorldConsts -> Int -> (Camera -> IO a) -> IO a
 withPrepareRendering wc fps f = SDL.withInit [SDL.InitEverything] (defCam wc fps >>= f)
@@ -89,36 +92,41 @@ renderFrame wc cam bolas= do
         Framerate.delay (view camFps cam)
             
 renderBola :: Camera -> Bola -> IO ()
-renderBola cam b =  M.when (r>=2 && isInRange (-r) x (w+r) && isInRange (-r) y (h+r)) $ do
-    if r>=5 && view bolMass b >= 10
-    then M.void $ do
-        SDL.filledCircle surf (round x) (round y) (round r) borderColor
-        SDL.aaCircle surf (round x) (round y) (round r) borderColor
-        SDL.filledCircle surf (round x) (round y) (round r - border) color
-        SDL.aaCircle surf (round x) (round y) (round r - border) color
-    else M.void $ do
-        SDL.filledCircle surf (round x) (round y) (round r) color
-        SDL.aaCircle surf (round x) (round y) (round r) color
-    where surf = view camSurf cam
-          (x, y) = toScreenV cam (view bolPos b)
-          (w, h) = tmap fromIntegral (view camSize cam)
-          r = toScreen cam (massToRadio $ view bolMass b)
+renderBola cam b = M.when (shouldDraw) $ M.void $ do
+        if rr>=5 && view bolMass b >= 10 then do
+            draw SDL.filledCircle rr borderColor
+            draw SDL.aaCircle rr borderColor
+            draw SDL.filledCircle (rr - border) color
+            draw SDL.aaCircle (rr - border) color
+        else if rr>1 then do
+            draw SDL.filledCircle rr color
+            draw SDL.aaCircle rr color
+        else 
+            draw SDL.pixel color
+    where (x, y) = tmap round $ toScreenV cam (view bolPos b)
+          r = toScreen cam (bolRadio b)
+          rr = round r
+          (w, h) = tmap fromIntegral $ view camSize cam
+          surf = view camSurf cam
+          draw f = f surf x y
           border = round $ toScreen cam 0.5
           color = view bolColor b
           borderColor = let (r, g, b) = getRgb color
                             darker c = round $ 0.9 * fromIntegral c
                         in rgb (darker r) (darker g) (darker b)
-          isInRange lo x hi = lo<=x && x<= hi 
-
+          isInRange lo x hi = lo<=x && x<= hi
+          shouldDraw = r>=0.4 && isInRange (-rr) x (w+rr) && isInRange (-rr) y (h+rr)
 
 renderBackground :: WorldConsts -> Camera -> IO ()
-renderBackground wc cam = M.void $ do
-        SDL.fillRect surf (Just $ SDL.Rect x1 y1 (w+1) (h+1)) backColor
-        M.when (separation>4) $ do
+renderBackground wc cam = 
+        if separation>4 then do
+            SDL.fillRect surf (Just $ SDL.Rect x1 y1 (w+1) (h+1)) backColor
             drawLines (\y -> SDL.hLine surf (fromIntegral x1) (fromIntegral x2) (round y) lineColor)
                 (correct y1') (fromIntegral $ min vy y2) separation
             drawLines (\x -> SDL.vLine surf (round x) (fromIntegral y1) (fromIntegral y2) lineColor)
                 (correct x1') (fromIntegral $ min vx x2) separation
+        else M.void $
+            SDL.fillRect surf (Just $ SDL.Rect x1 y1 (w+1) (h+1)) lineColor
     where surf = view camSurf cam
           lineColor = SDL.Pixel 0xe3ebefff
           backColor = SDL.Pixel 0xf2fbffff

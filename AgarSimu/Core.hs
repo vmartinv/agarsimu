@@ -45,6 +45,6 @@ gameLogic wc scene = proc _ -> do
             oldBolas <- delay inits -< bolas
             food <- foodGenerator (view worlSize wc) -< oldBolas
             bolas <- aiswire -< map (++food) (mkEnvs oldBolas)
-        returnA -< bolas ++ food
+        returnA -<  food ++ bolas
     where inits = map snd scene
           aiswire = combine $ map (bolaLogic wc) scene
