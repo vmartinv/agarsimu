@@ -1,12 +1,5 @@
 - quit keys
--inhibit when more input (eliminate accums)
-- control speed?
-    -world const as variable with time
-
-
-
 -prefab more functions (ej move tantos casilleros)
-
-
-
+-fix a eats b
 -better setup interface
+-fix weird foor dissapearing

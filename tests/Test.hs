@@ -1,17 +1,17 @@
 module Main where
 
-import AgarSimu
 import Prelude hiding ((.), id)
-import Control.Arrow
 import Control.Monad.Random
+import Control.Arrow
+import AgarSimu
 
 main :: IO ()
 main = do ts <- testScene
           runSimulation wc ts
-    where wc = mkWorldConsts (Just (50, 50)) Nothing (Just 1)
+    where wc = WorldConsts (100, 100) (600, 600) 
 
 testScene :: MonadRandom m => m Scene
-testScene = many1 (50, 50) 30
+testScene = manySc (100, 100) (10, 12) 30
 -- ~ do
         -- ~ rc <- randomColor
         -- ~ rc2 <- randomColor
@@ -19,11 +19,12 @@ testScene = many1 (50, 50) 30
         -- ~ return $ [(randomAI 0.2, Bola (rgb 255 ((fromIntegral i)*90) 40) (10, ((fromInteger i)*10)) 10) | i <- [0..4]]
          -- ~ ++ [(randomAI 1, Bola (rgb 40 ((fromIntegral i)*80) 255) (35, (10+(fromInteger (i-2))*30)) 30)| i <- [2..3]]
 
-many1 :: MonadRandom m => (Double, Double) -> Int -> m [(AI, Bola)]
-many1 _ 0 = return []
-many1 tam n = do b <- randomBola tam 15
-                 xs <- many1 tam (n-1)
-                 return $ (randomAI 0.2, b):xs
+manySc :: MonadRandom m => (Double, Double) -> (Double, Double) -> Int -> m [(AI, Bola)]
+manySc _ _ 0 = return []
+manySc tam rng n = do m <- getRandomR rng
+                      b <- randomBola tam m
+                      xs <- manySc tam rng (n-1)
+                      return $ (randomAI 0.2, b):xs
   
 randomAI :: Time -> AI
 randomAI t = for t . hold . now . randomDir --> randomAI t

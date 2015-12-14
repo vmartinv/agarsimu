@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 -- |
 -- Module:     AgarSimu.PreFab
 -- Copyright:  (c) 2015 Martin Villagra
@@ -7,7 +6,7 @@
 
 module AgarSimu.PreFab
     ( -- * Wire constructor
-      mkConst',
+      mkConstM,
       
       -- * Random
       randomW,
@@ -20,21 +19,19 @@ module AgarSimu.PreFab
     )
     where
 
-import Control.Lens hiding (at, perform, wrapped)
-import Control.Wire
-import Control.Monad.Random
-import AgarSimu.Utils
-import AgarSimu.PublicEntities
 import Prelude hiding ((.), id)
+import Control.Monad.Random
+import Control.Wire
+import AgarSimu.PublicEntities
 
 
-mkConst' :: Monad m => m b -> Wire s e m a b
-mkConst' = mkGen_.const.fmap Right
+mkConstM :: Monad m => m b -> Wire s e m a b
+mkConstM = mkGen_ . const . fmap Right
 
 randomW :: (MonadRandom m, Random b) => Wire s e m a b
-randomW = mkConst' getRandom
+randomW = mkConstM getRandom
 randomWR :: (MonadRandom m, Random b) => (b, b) -> Wire s e m a b
-randomWR (x, y) = mkConst' $ getRandomR (x, y)
+randomWR (x, y) = mkConstM $ getRandomR (x, y)
 
 randomDir :: RandomWire a Vector
 randomDir = go . randomWR (-pi, pi)

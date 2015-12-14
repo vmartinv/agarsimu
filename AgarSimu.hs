@@ -16,7 +16,6 @@ module AgarSimu
     where
 
 import AgarSimu.Core
-import AgarSimu.Entities
 import AgarSimu.PublicEntities
 import AgarSimu.PreFab
 import Control.Wire

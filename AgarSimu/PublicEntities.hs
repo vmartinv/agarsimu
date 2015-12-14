@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
 -- |
--- Module:     AgarSimu.PreFab
+-- Module:     AgarSimu.PublicEntities
 -- Copyright:  (c) 2015 Martin Villagra
 -- License:    BSD3
 -- Maintainer: Martin Villagra <mvillagra0@gmail.com>
@@ -14,8 +15,7 @@ module AgarSimu.PublicEntities
       
       -- * World
       WorldConsts(..),
-      mkWorldConsts,
-      worlSize, worlWindowSize, worlSpeed,
+      worlSize, worlWindowSize,
       
       -- * Bola
       Bola(..),
@@ -33,13 +33,13 @@ module AgarSimu.PublicEntities
     )
     where
 
-import Control.Lens hiding (at, perform, wrapped)
 import Data.Maybe
-import Control.Wire hiding ((.))
-import Control.Monad.Random
 import Data.Word (Word8, Word32)
+import Control.Monad.Random
+import Control.Lens hiding (at, perform, wrapped)
 import Data.AffineSpace (distance)
 import qualified Graphics.UI.SDL as SDL (Pixel(..))
+import Control.Wire hiding ((.))
 import AgarSimu.Utils
 
 rgb :: Word8 -> Word8 -> Word8 -> SDL.Pixel
@@ -61,20 +61,15 @@ getRgb (SDL.Pixel p) = (md $ p `div` 2^24, md $ p `div` 2^16, md $ p `div` 2^8)
 type Vector = (Double, Double)
 
 --------------------------------------------------------------------------------
-data WorldConsts = WorldConsts { _worlSize :: Vector
-                               , _worlWindowSize :: (Int, Int)
-                               , _worlSpeed :: Int
+data WorldConsts = WorldConsts { _worlSize :: !Vector
+                               , _worlWindowSize :: !(Int, Int)
                                } deriving Show
 $(makeLenses ''WorldConsts)
 
-mkWorldConsts :: Maybe Vector -> Maybe (Int, Int) -> Maybe Int -> WorldConsts
-mkWorldConsts v ws t = WorldConsts (v//(100, 100)) (ws//(400, 400)) (t//1)
-    where (//) = flip fromMaybe
-
 --------------------------------------------------------------------------------
-data Bola = Bola { _bolColor :: SDL.Pixel
-                 , _bolPos :: Vector
-                 , _bolMass :: Double
+data Bola = Bola { _bolColor :: !SDL.Pixel
+                 , _bolPos :: !Vector
+                 , _bolMass :: !Double
                  } deriving Show
 $(makeLenses ''Bola)
 
