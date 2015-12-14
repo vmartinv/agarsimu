@@ -8,7 +8,7 @@
 module AgarSimu.Bola
     ( -- * Wires
       bolaLogic,
-      comidaLogic,
+      foodGenerator,
       
        -- * Environment creator
       mkEnvs
@@ -22,6 +22,7 @@ import Data.VectorSpace ((^+^), (^-^), magnitude, (*^), (^/))
 import Data.AffineSpace (distance)
 import Control.Wire
 import FRP.Netwire
+import AgarSimu.PreFab
 import AgarSimu.PublicEntities
 import AgarSimu.Utils
  
@@ -32,7 +33,7 @@ mkEnvs xs = mkEnvs' [] xs
 
 mkBolaVec :: Bola -> Vector -> Vector
 mkBolaVec b v = speedConstant *^ normalized ^/ r
-    where r = getRadio b
+    where r = massToRadio (view bolMass b)
           normalized = let m = magnitude v
                        in if m>1 then v^/m else v
           speedConstant = 50
@@ -42,9 +43,10 @@ collideBola others me = if any (eats me) others
                         then Nothing
                         else let eaten = map (view bolMass) $ filter (flip eats me) others
                              in Just $ foldl (+) 0 eaten
-        where a `eats` b = let s = getRadio b + getRadio a
+        where a `eats` b = let ra = massToRadio (view bolMass a)
+                               rb = massToRadio (view bolMass b)
                                prop = view bolMass b / view bolMass a
-                           in prop > 1.1 && distBolas a b - getRadio a < 0.9*getRadio b
+                           in prop > 1.1 && distBolas a b - ra < rb
 
 --------------------------------------------------------------------------------
 bolaLogic :: WorldConsts -> (AI, Bola) -> RandomWire [Bola] Bola
@@ -61,17 +63,30 @@ bolaLogic wc (ai, init) = proc (otros) -> do
             --Update Position
             v <- ai -< ((wx, wy), yo', otros)
             let v' = mkBolaVec yo' v
-            pos <- integralVecWith clampCircle initV -< (v', getRadio yo')
+            pos <- integralVecWith clampCircle initV -< (v', massToRadio (view bolMass yo'))
             yo <- returnA -< set bolPos pos yo'
         returnA -< yo
     where initV = view bolPos init
           (wx, wy) = view worlSize wc
           clampCircle r (x, y) = (clamp r (wx-r) x, clamp r (wy-r) y)
 
+-- Maintains the food of the world.
+-- Receives all others ais (so eaten food is deleted), returns the food
+foodGenerator :: Vector -> RandomWire [Bola] [Bola]
+foodGenerator (wx, wy) = proc players -> do
+        rec
+            oldQFood <- delay 0 -< length food
+            newFood <- (genFood . when (<dens) <|> never) -< oldQFood
+            food <- dynMulticast -< (players, newFood)
+        returnA -< food
+    where genFood = periodic prob . fmap foodLogic (mkConstM (randomBola (wx, wy) 1))
+          dens = round $ 0.5 * wx * wy / 9  -- 0.05 ~ food per square
+          prob = realToFrac $ 1/(0.0005 * wx * wy)
 
-comidaLogic :: Bola -> RandomWire [Bola] Bola
-comidaLogic init = pure init . when (isJust) . mkSF_ (flip collideBola init)
+foodLogic :: Bola -> RandomWire [Bola] Bola
+foodLogic init = pure init . when (isJust) . mkSF_ (flip collideBola init)
 
+        
 integralVecWith :: HasTime t s
     => (w -> Vector -> Vector)  -- ^ Correction function.
     -> Vector                   -- ^ Integration constant (aka start value).

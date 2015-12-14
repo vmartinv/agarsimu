@@ -18,7 +18,7 @@ module AgarSimu.Utils
       delRandom,
             
       -- * General Wire Runner
-      runAnimation,
+      runWire,
       
       -- * Miscellaneous
       clamp,
@@ -28,7 +28,7 @@ module AgarSimu.Utils
 
 import Prelude hiding ((.), id, until)
 import Data.Either
-import Data.Traversable
+import Data.Traversable hiding (for)
 import Control.Monad.Fix (MonadFix)
 import Control.Wire
 import Control.Wire.Unsafe.Event
@@ -65,11 +65,14 @@ multicast ws = mkGen $ \dt x -> do
 
 -- | Dynamic set of wires. Wires are created with the second input
 -- Wires that inhibit are deleted
-dynMulticast :: (Monad m, Monoid s, Monoid e) => [Wire s e m a b] -> Wire s e m (a, Event (Wire s e m a b)) [b]
-dynMulticast ws = ((krSwitch.multicast) ws). second (mkSF_ (fmap addWire))
+dynMulticast :: (Monad m, Monoid s, Monoid e) => Wire s e m (a, Event (Wire s e m a b)) [b]
+dynMulticast = krSwitch (pure []) . second (mkSF_ (fmap addWire))
     where addWire :: (Monad m, Monoid s, Monoid e) => Wire s e m a b -> Wire s e m a [b] -> Wire s e m a [b]
-          addWire w ws = fmap (uncurry (:)) (w &&& ws) --> ws
-            
+          addWire w ws = let mw = fmap Just w --> pure Nothing
+                             f :: (Maybe b, [b]) -> [b]
+                             f = uncurry $ maybe id (:)
+                         in fmap f (mw &&& ws)
+
 foldlWire :: Foldable t => (c -> b -> a -> b) -> b -> Wire s e m (c, t a) b
 foldlWire f i = mkSFN $ \(x, xs) -> let  i' = foldl (f x) i xs
                                     in (i', foldlWire f i') 
@@ -82,21 +85,23 @@ delRandom :: (Monad m, Monoid s) =>
 delRandom gen w = mkGen $ \dt x -> do
             let ((y, w'), gen') = runRand (stepWire w dt (Right x)) gen
             return (y, delRandom gen' w')
-        
+
+
 -- | This function runs the given wire using the given state delta
--- generator. Press Ctrl-C to abort.
-runAnimation ::
+-- generator. Press Ctrl-C to abort, closes on inhibition.
+runWire ::
     (Monad m', MonadIO m)
     => (forall a. m' a -> m a)
     -> Session m s
     -> (forall a. Wire s e m' a b)
-    -> m c
-runAnimation run s0 w0 = loop s0 w0
+    -> m e
+runWire run s0 w0 = loop s0 w0
     where loop s' w' = do
             (ds, s) <- stepSession s'
             (mx, w) <- run (stepWire w' ds (Right ()))
-            loop s w
-
+            case mx of
+                Right _ -> loop s w
+                Left x -> return x
 
 clamp :: Ord a => a -> a -> a -> a
 clamp mn mx = max mn . min mx

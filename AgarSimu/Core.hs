@@ -21,34 +21,30 @@ import AgarSimu.PublicEntities
 import AgarSimu.Render
 import AgarSimu.Utils
 
+import FRP.Netwire.Noise
+import qualified Graphics.UI.SDL as SDL (Pixel(..))
+
 defFPS :: Num a => a
 defFPS = 60
-
+  
 runSimulation :: WorldConsts -> Scene -> IO ()
 runSimulation wc scene = withPrepareRendering wc defFPS $ \cam -> do
-        let inputwire = inputLogic cam
         g <- getStdGen
+        let inputwire = inputLogic cam
         let gamewire = delRandom g (gameLogic wc scene)
         let renderwire = renderLogic wc
         let mainwire = proc x -> do
                 (camera, speed) <- inputwire -< x
                 frame <- gamewire -< x
                 renderwire -< (camera, frame, speed)
-        runAnimation id (countSession_ $ 1/defFPS) mainwire
-    where (ais, players) = unzip scene
-          (vx,vy) = view worlWindowSize wc
-    
+        runWire id (countSession_ $ 1/defFPS) mainwire
+
 gameLogic :: WorldConsts -> Scene -> RandomWire a [Bola]
 gameLogic wc scene = proc _ -> do
         rec
             oldBolas <- delay inits -< bolas
-            oldComida <- delay [] -< comida
-            bolas <- aiswire -< map (++oldComida) (mkEnvs oldBolas)
-            comida <- foodwire . (id &&& genFood) -< oldBolas
-        returnA -< bolas++comida
-    where (wx, wy) = view worlSize wc
-          inits = map snd scene
+            food <- foodGenerator (view worlSize wc) -< oldBolas
+            bolas <- aiswire -< map (++food) (mkEnvs oldBolas)
+        returnA -< bolas ++ food
+    where inits = map snd scene
           aiswire = combine $ map (bolaLogic wc) scene
-          foodwire = dynMulticast [] 
-          genFood = periodic prob . fmap comidaLogic (mkConstM (randomBola (wx, wy) 1))
-          prob = realToFrac $ 1/(0.0005 *  wx * wy)

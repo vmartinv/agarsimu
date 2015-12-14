@@ -7,12 +7,8 @@
 -- Maintainer: Martin Villagra <mvillagra0@gmail.com>
 
 module AgarSimu.PublicEntities
-    ( -- * Base
-      rgb,
-      getRgb,
-      randomColor,
-      Vector,
-      
+    ( Vector,
+
       -- * World
       WorldConsts(..),
       worlSize, worlWindowSize,
@@ -20,9 +16,14 @@ module AgarSimu.PublicEntities
       -- * Bola
       Bola(..),
       bolColor, bolPos, bolMass,
-      getRadio,
+      massToRadio,
       distBolas,
       randomBola,
+      
+      -- * Colors
+      rgb,
+      randomColor,
+      getRgb,
       
       -- * Base Types
       Time,
@@ -42,6 +43,34 @@ import qualified Graphics.UI.SDL as SDL (Pixel(..))
 import Control.Wire hiding ((.))
 import AgarSimu.Utils
 
+type Vector = (Double, Double)
+
+data WorldConsts = WorldConsts { _worlSize :: !Vector
+                               , _worlWindowSize :: !(Int, Int)
+                               } deriving Show
+$(makeLenses ''WorldConsts)
+
+--------------------------------------------------------------------------------
+data Bola = Bola { _bolColor :: !SDL.Pixel
+                 , _bolPos :: !Vector
+                 , _bolMass :: !Double
+                 } deriving Show
+$(makeLenses ''Bola)
+
+massToRadio :: Double -> Double
+massToRadio = sqrt.(/pi)
+
+distBolas :: Bola -> Bola -> Double
+distBolas p q = distance (view bolPos p) (view bolPos q)
+
+randomBola :: MonadRandom m => (Double, Double) -> Double -> m Bola
+randomBola (wx, wy) m = let r = massToRadio m 
+                        in do col <- randomColor
+                              x <- getRandomR (r, wx-r)
+                              y <- getRandomR (r, wy-r)
+                              return $ Bola col (x, y) m
+
+--------------------------------------------------------------------------------
 rgb :: Word8 -> Word8 -> Word8 -> SDL.Pixel
 rgb r g b = let fi = fromIntegral
             in SDL.Pixel (fi r *2^24 + fi g*2^16 + fi b*2^8 + 0xff)
@@ -58,32 +87,6 @@ getRgb :: SDL.Pixel -> (Word8, Word8, Word8)
 getRgb (SDL.Pixel p) = (md $ p `div` 2^24, md $ p `div` 2^16, md $ p `div` 2^8)
     where md b = fromIntegral (b `mod` 2^8)
 
-type Vector = (Double, Double)
-
---------------------------------------------------------------------------------
-data WorldConsts = WorldConsts { _worlSize :: !Vector
-                               , _worlWindowSize :: !(Int, Int)
-                               } deriving Show
-$(makeLenses ''WorldConsts)
-
---------------------------------------------------------------------------------
-data Bola = Bola { _bolColor :: !SDL.Pixel
-                 , _bolPos :: !Vector
-                 , _bolMass :: !Double
-                 } deriving Show
-$(makeLenses ''Bola)
-
-getRadio :: Bola -> Double
-getRadio b = sqrt $ (view bolMass b)/pi
-
-distBolas :: Bola -> Bola -> Double
-distBolas p q = distance (view bolPos p) (view bolPos q)
-
-randomBola :: MonadRandom m => (Double, Double) -> Double -> m Bola
-randomBola (wx, wy) m = do col <- randomColor
-                           x <- getRandomR (0, wx)
-                           y <- getRandomR (0, wy)
-                           return $ Bola col (x, y) m
 --------------------------------------------------------------------------------
 type Time = NominalDiffTime
 type Environment = (Vector, Bola, [Bola])

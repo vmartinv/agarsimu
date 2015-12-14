@@ -38,7 +38,6 @@ data Camera = Camera { _camPos :: !Vector
                      } deriving Show
 $(makeLenses ''Camera)
 
-          
 camZoomIn :: Camera -> Camera
 camZoomIn cam = over camZoom (\z-> min 100 (1.1*z)) cam   
 
@@ -76,17 +75,18 @@ renderLogic :: Monoid e =>
 renderLogic wc = proc (cam, bolas, speed) -> do
         rec elapsed <- delay 0 -< (elapsed+1) `mod` speed
         if elapsed==0
-            then renderFrame -< (cam, bolas)
+            then mkGen_' (uncurry $ renderFrame wc) -< (cam, bolas)
             else returnA -< ()
-    where renderFrame = mkGen_' $ \(cam, bolas) -> do
-            let screen = view camSurf cam
-                frameRate = view camFps cam
-            SDL.mapRGB (SDL.surfaceGetPixelFormat screen) 0 0 0 >>=
-                SDL.fillRect screen Nothing
-            renderBackground wc cam
-            mapM (renderBola cam) bolas
-            SDL.flip screen
-            Framerate.delay frameRate
+
+renderFrame :: WorldConsts -> Camera -> [Bola] -> IO ()
+renderFrame wc cam bolas= do
+        let screen = view camSurf cam
+        SDL.mapRGB (SDL.surfaceGetPixelFormat screen) 0 0 0 >>=
+            SDL.fillRect screen Nothing
+        renderBackground wc cam
+        mapM_ (renderBola cam) bolas
+        SDL.flip screen
+        Framerate.delay (view camFps cam)
             
 renderBola :: Camera -> Bola -> IO ()
 renderBola cam b =  M.when (r>=2 && isInRange (-r) x (w+r) && isInRange (-r) y (h+r)) $ do
@@ -102,7 +102,7 @@ renderBola cam b =  M.when (r>=2 && isInRange (-r) x (w+r) && isInRange (-r) y (
     where surf = view camSurf cam
           (x, y) = toScreenV cam (view bolPos b)
           (w, h) = tmap fromIntegral (view camSize cam)
-          r = (toScreen cam (getRadio b))
+          r = toScreen cam (massToRadio $ view bolMass b)
           border = round $ toScreen cam 0.5
           color = view bolColor b
           borderColor = let (r, g, b) = getRgb color

@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 -- Module:     AgarSimu.Input
 -- Copyright:  (c) 2015 Martin Villagra
 -- License:    BSD3
@@ -15,9 +16,20 @@ import Control.Wire
 import AgarSimu.Render
 import AgarSimu.Utils
 
-inputLogic :: (Monoid s, Monoid e) => Camera -> Wire s e IO a (Camera, Int)
-inputLogic cam = addMonad (mouseCam cam &&& speedControl) . readEvents
+inputLogic :: (Monoid s) => Camera -> Wire s () IO a (Camera, Int)
+inputLogic cam = proc _ -> do
+    evs <- readEvents -< ()
+    quit <- addMonad quitControl -< evs
+    case quit of
+        True -> inhibit () -< ()
+        False -> addMonad (mouseCam cam &&& speedControl) -< evs
 
+
+quitControl :: WireP s e [SDL.Event] Bool
+quitControl = foldlWire (const upd) False . (id &&& id)
+    where upd _ (SDL.KeyDown (SDL.Keysym SDL.SDLK_q _ _)) = True
+          upd b _ = b
+          
 speedControl :: WireP s e [SDL.Event] Int
 speedControl = foldlWire (const upd) 1 . (id &&& id)
     where upd x (SDL.KeyDown (SDL.Keysym SDL.SDLK_KP_PLUS _ _)) = modi con x
