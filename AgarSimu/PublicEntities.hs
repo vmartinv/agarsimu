@@ -9,17 +9,13 @@
 module AgarSimu.PublicEntities
     ( Vector
 
-      -- * World
-    , WorldConsts(..)
-    , worlSize, worlWindowSize
-
       -- * Bola
     , Bola(..)
     , bolColor, bolPos, bolMass
     , bolRadio
     , massToRadio
     , distBolas
-    , randomBola
+    , eats
 
       -- * Colors
     , rgb
@@ -31,7 +27,6 @@ module AgarSimu.PublicEntities
     , Environment
     , RandomWire
     , AI
-    , Scene    
     )
     where
 
@@ -45,11 +40,6 @@ import Control.Wire hiding ((.))
 import AgarSimu.Utils
 
 type Vector = (Double, Double)
-
-data WorldConsts = WorldConsts { _worlSize :: !Vector
-                               , _worlWindowSize :: !(Int, Int)
-                               } deriving Show
-$(makeLenses ''WorldConsts)
 
 --------------------------------------------------------------------------------
 data Bola = Bola { _bolColor :: !SDL.Pixel
@@ -67,12 +57,9 @@ massToRadio = sqrt.(/pi)
 distBolas :: Bola -> Bola -> Double
 distBolas p q = uncurry distance $ view (bolPos `alongside` bolPos) (p, q)
 
-randomBola :: MonadRandom m => (Double, Double) -> Double -> m Bola
-randomBola (wx, wy) m = let r = massToRadio m 
-                        in do col <- randomColor
-                              x <- getRandomR (r, wx-r)
-                              y <- getRandomR (r, wy-r)
-                              return $ Bola col (x, y) m
+
+eats :: Bola -> Bola -> Bool
+a `eats` b = view bolMass b / view bolMass a > 1.1 
 
 --------------------------------------------------------------------------------
 rgb :: Word8 -> Word8 -> Word8 -> SDL.Pixel
@@ -98,4 +85,3 @@ type Time = NominalDiffTime
 type Environment = (Vector, Bola, [Bola])
 type RandomWire = Wire (Timed Time ()) () (Rand StdGen)
 type AI = RandomWire Environment Vector
-type Scene = [(AI, Bola)]

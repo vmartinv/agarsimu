@@ -9,7 +9,7 @@
 
 module AgarSimu.Render
     ( -- * Camera
-      Camera (..)
+      Camera
     , camZoomIn
     , camZoomOut
     , camMove
@@ -28,6 +28,7 @@ import qualified Graphics.UI.SDL.Primitives as SDL
 import qualified Graphics.UI.SDL.Framerate as Framerate
 import Control.Wire hiding ((.))
 import AgarSimu.PublicEntities
+import AgarSimu.Scene
 import AgarSimu.Utils
 
 data Camera = Camera { _camPos :: !Vector

@@ -77,9 +77,11 @@ foldlWire :: Foldable t => (c -> b -> a -> b) -> b -> Wire s e m (c, t a) b
 foldlWire f i = mkSFN $ \(x, xs) -> let  i' = foldl (f x) i xs
                                     in (i', foldlWire f i') 
 
+-- | Transforms a pure wire into one with side-effects
 addMonad :: Monad m => WireP s e a b -> Wire s e m a b
 addMonad = mapWire $ return.runIdentity
 
+-- | Transforms a random wire into a pure one by suppling the generator.
 delRandom :: (Monad m, Monoid s) =>
     g -> Wire s e (Rand g) a b -> Wire s e m a b
 delRandom gen w = mkGen $ \dt x -> do

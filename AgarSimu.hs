@@ -9,6 +9,7 @@ module AgarSimu
       module AgarSimu.Core,
       module AgarSimu.PublicEntities,
       module AgarSimu.PreFab,
+      module AgarSimu.Scene,
 
       -- * External
       module Control.Wire
@@ -18,4 +19,5 @@ module AgarSimu
 import AgarSimu.Core
 import AgarSimu.PublicEntities
 import AgarSimu.PreFab
+import AgarSimu.Scene
 import Control.Wire
