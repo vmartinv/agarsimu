@@ -70,14 +70,14 @@ addBolas :: AI -> [Bola] -> Builder ()
 addBolas ai bolas = sequence (map (addBola ai) bolas) >> return ()
 
 versus :: AI -> AI -> Builder ()
-versus x y = do setWorldSize (300, 300)
-                setWindowSize (600, 600)
-                bolasA <- newBolas 20 (15, 30)
-                bolasB <- newBolas 20 (15, 30)
-                let colA = SDL.Pixel 0xff0000ff
-                    colB = SDL.Pixel 0x0000ffff
-                addBolas x (map (set bolColor colA) bolasA)
-                addBolas y (map (set bolColor colB) bolasB)
+versus ai1 ai2 = do setWorldSize (200, 200)
+                    setWindowSize (600, 600)
+                    bolas1 <- newBolas 20 (15, 30)
+                    bolas2 <- newBolas 20 (15, 30)
+                    let col1 = rgb 0x07 0xff 0xb0
+                        col2 = rgb 0xe4 0x07 0xff
+                    addBolas ai1 (map (set bolColor col1) bolas1)
+                    addBolas ai2 (map (set bolColor col2) bolas2)
 
 getScene :: Builder a -> StdGen -> (Scene, StdGen)
 getScene b g = runRand (execStateT b (defWorldConsts, [])) g

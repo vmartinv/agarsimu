@@ -32,12 +32,12 @@ mkEnvs xs = mkEnvs' [] xs
   where mkEnvs' izq [] = []
         mkEnvs' izq (x:der) = (izq++der):mkEnvs' (x:izq) der
 
-mkBolaVec :: Bola -> Vector -> Vector
-mkBolaVec b v = speedConstant *^ normalized ^/ r
-    where r = sqrt $ bolRadio b
+mkBolaVec :: Double -> Bola -> Vector -> Vector
+mkBolaVec s b v = s' *^ normalized ^/ r
+    where r = (view bolMass b)**0.4
           normalized = let m = magnitude v
                        in if m>1 then v^/m else v
-          speedConstant = 50
+          s' = 35*s
 
 collideBola :: [Bola] -> Bola -> Maybe Double
 collideBola others me = if any (eats' me) others
@@ -46,11 +46,9 @@ collideBola others me = if any (eats' me) others
                              in Just (sum eaten)
         where a `eats'` b = a `eats` b && distBolas a b <= bolRadio b
 
-
-
 --------------------------------------------------------------------------------
-bolaLogic :: WorldConsts -> (AI, Bola) -> RandomWire [Bola] Bola
-bolaLogic wc (ai, init) = proc (otros) -> do
+bolaLogic :: WorldConsts -> (AI, Bola) -> RandomWire (Double, [Bola]) Bola
+bolaLogic wc (ai, init) = proc (speed, otros) -> do
         rec
             oldYo <- delay init -< yo
             --Update Mass
@@ -62,7 +60,7 @@ bolaLogic wc (ai, init) = proc (otros) -> do
 
             --Update Position
             v <- ai -< ((wx, wy), yo', otros)
-            let v' = mkBolaVec yo' v
+            let v' = mkBolaVec speed yo' v
             pos <- integralVecWith clampCircle initV -< (v', bolRadio yo')
             yo <- returnA -< set bolPos pos yo'
         returnA -< yo
@@ -80,8 +78,8 @@ foodGenerator (wx, wy) = proc players -> do
             food <- dynMulticast -< (players, newFood)
         returnA -< food
     where genFood = periodic prob . fmap foodLogic (mkConstM (randomBola (wx, wy) 1))
-          dens = round $ 0.08 * wx * wy / 9  -- 0.05 ~ food per square
-          prob = realToFrac $ 1/(0.0005 * wx * wy)
+          dens = round $ 0.06 * wx * wy / 9  -- 0.05 ~ food per square
+          prob = realToFrac $ 1/(0.0003 * wx * wy)
 
 foodLogic :: Bola -> RandomWire [Bola] Bola
 foodLogic init = pure init . when (isJust) . mkSF_ (flip collideBola init)

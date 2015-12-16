@@ -36,18 +36,18 @@ runSimulation builder = do
         let inputwire = inputLogic cam
         let gamewire = delRandom g (gameLogic (wc,players))
         let renderwire = renderLogic wc
-        let mainwire = proc x -> do
-                (camera, speed) <- inputwire -< x
-                frame <- gamewire -< x
-                renderwire -< (camera, frame, speed)
+        let mainwire = proc _ -> do
+                (camera, speed) <- inputwire -< ()
+                frame <- gamewire -< speed
+                renderwire -< (camera, frame, round $ speed)
         runWire id (countSession_ $ 1/defFPS) mainwire
 
-gameLogic :: Scene -> RandomWire a [Bola]
-gameLogic (wc, players) = proc _ -> do
+gameLogic :: Scene -> RandomWire Double [Bola]
+gameLogic (wc, players) = proc speed -> do
         rec
             oldBolas <- delay inits -< bolas
             food <- foodGenerator (view worlSize wc) -< oldBolas
-            bolas <- aiswire -< map (++food) (mkEnvs oldBolas)
+            bolas <- aiswire -< map (\e ->  (speed, e++food)) (mkEnvs oldBolas)
         returnA -<  food ++ bolas
     where inits = map snd players
           aiswire = combine $ map (bolaLogic wc) players

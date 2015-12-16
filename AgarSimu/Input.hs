@@ -16,7 +16,7 @@ import Control.Wire
 import AgarSimu.Render
 import AgarSimu.Utils
 
-inputLogic :: (Monoid s, Monoid e) => Camera -> Wire s e IO a (Camera, Int)
+inputLogic :: (Monoid s, Monoid e) => Camera -> Wire s e IO a (Camera, Double)
 inputLogic cam = proc _ -> do
     evs <- readEvents -< ()
     addMonad quitHandler -< evs
@@ -25,13 +25,12 @@ inputLogic cam = proc _ -> do
 quitHandler :: Monoid e => WireP s e [SDL.Event] ()
 quitHandler = pure () . when (not.(any (isKeyDown SDL.SDLK_q)))
 
-speedHandler :: WireP s e [SDL.Event] Int
+speedHandler :: WireP s e [SDL.Event] Double
 speedHandler = foldlWire (const upd) 1 . (id &&& id)
-    where upd x ev | isKeyDown SDL.SDLK_KP_PLUS ev = modi con x
-          upd x ev | isKeyDown SDL.SDLK_KP_MINUS ev = max 1 (modi (1/con) x)
+    where upd x ev | isKeyDown SDL.SDLK_KP_PLUS ev = con*x
+          upd x ev | isKeyDown SDL.SDLK_KP_MINUS ev = max 1 (x/con)
           upd x _ = x
-          con = 1.6 :: Double
-          modi c = round.(c*).fromIntegral  
+          con = 1.6
  
 leftClickHandler :: WireP s e [SDL.Event] Bool
 leftClickHandler = foldlWire (const upd) False . (id&&&id)
