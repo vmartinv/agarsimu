@@ -27,8 +27,8 @@ quitHandler = pure () . when (not.(any (isKeyDown SDL.SDLK_q)))
 
 speedHandler :: WireP s e [SDL.Event] Double
 speedHandler = foldlWire (const upd) 1 . (id &&& id)
-    where upd x ev | isKeyDown SDL.SDLK_KP_PLUS ev = con*x
-          upd x ev | isKeyDown SDL.SDLK_KP_MINUS ev = max 1 (x/con)
+    where upd x ev | isKeyDown SDL.SDLK_KP_PLUS ev = x*con
+          upd x ev | isKeyDown SDL.SDLK_KP_MINUS ev = max 0.0001 (x/con)
           upd x _ = x
           con = 1.6
  
@@ -38,10 +38,6 @@ leftClickHandler = foldlWire (const upd) False . (id&&&id)
           upd _ (SDL.MouseButtonUp _ _ SDL.ButtonLeft) = False
           upd b _ = b
           
--- ~ rightClickHandler :: WireP s e [SDL.Event] (Event Bola)
--- ~ rightClickHandler =  . become (any isClick)
-    -- ~ where isClick (SDL.MouseButtonDown _ _ SDL.ButtonRight) = True
-          -- ~ isClick _ = False
 
 mouseCam :: Camera -> WireP s e [SDL.Event] Camera
 mouseCam init = foldlWire upd init . (leftClickHandler &&& id)
@@ -55,7 +51,7 @@ isKeyDown x (SDL.KeyDown (SDL.Keysym y _ _)) = x==y
 isKeyDown _ _ = False
 
 readEvents :: Monoid e => Wire s e IO a [SDL.Event]
-readEvents = mkGen_' $ const (acum [])
+readEvents = mkConstM (acum [])
     where acum evs = do ev <- SDL.pollEvent
                         -- ~ print ev
                         case ev of

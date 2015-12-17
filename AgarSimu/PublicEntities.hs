@@ -59,7 +59,7 @@ distBolas p q = uncurry distance $ view (bolPos `alongside` bolPos) (p, q)
 
 
 eats :: Bola -> Bola -> Bool
-a `eats` b = view bolMass b / view bolMass a > 1.1 
+a `eats` b = view bolMass a / view bolMass b > 1.1 
 
 --------------------------------------------------------------------------------
 rgb :: Word8 -> Word8 -> Word8 -> SDL.Pixel
@@ -75,9 +75,9 @@ randomColor = getRandomR (0, length colors - 1) >>= return.(colors !!)
             , 0x2507ff, 0x07ff5a]
 
 getRgb :: SDL.Pixel -> (Word8, Word8, Word8)
-getRgb (SDL.Pixel p) = (  md $ p `div` 2^24
-                        , md $ p `div` 2^16
-                        , md $ p `div` 2^8)
+getRgb (SDL.Pixel p) = ( md $ p `div` 2^24
+                       , md $ p `div` 2^16
+                       , md $ p `div` 2^8)
     where md b = fromIntegral (b `mod` 2^8)
 
 --------------------------------------------------------------------------------

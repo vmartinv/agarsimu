@@ -37,14 +37,14 @@ mkBolaVec s b v = s' *^ normalized ^/ r
     where r = (view bolMass b)**0.4
           normalized = let m = magnitude v
                        in if m>1 then v^/m else v
-          s' = 35*s
+          s' = 110*s
 
 collideBola :: [Bola] -> Bola -> Maybe Double
-collideBola others me = if any (eats' me) others
+collideBola others me = if any (`eats'` me) others
                         then Nothing
-                        else let eaten = map (view bolMass) $ filter (flip eats' me) others
+                        else let eaten = map (view bolMass) $ filter (me `eats'`) others
                              in Just (sum eaten)
-        where a `eats'` b = a `eats` b && distBolas a b <= bolRadio b
+        where a `eats'` b = a `eats` b && distBolas a b <= bolRadio a
 
 --------------------------------------------------------------------------------
 bolaLogic :: WorldConsts -> (AI, Bola) -> RandomWire (Double, [Bola]) Bola
@@ -78,7 +78,7 @@ foodGenerator (wx, wy) = proc players -> do
             food <- dynMulticast -< (players, newFood)
         returnA -< food
     where genFood = periodic prob . fmap foodLogic (mkConstM (randomBola (wx, wy) 1))
-          dens = round $ 0.06 * wx * wy / 9  -- 0.05 ~ food per square
+          dens = round $ 0.06 * wx * wy / 9  -- 0.06 ~ food per square
           prob = realToFrac $ 1/(0.0003 * wx * wy)
 
 foodLogic :: Bola -> RandomWire [Bola] Bola

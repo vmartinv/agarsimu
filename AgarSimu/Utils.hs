@@ -9,6 +9,7 @@
 module AgarSimu.Utils
     ( -- * Wire Transformers
       mkGen_'
+    , mkConstM
     , addFeedBack
     , combine
     , multicast
@@ -34,6 +35,9 @@ import Control.Wire
 import Control.Wire.Unsafe.Event
 import Control.Monad.Random
 import Control.Monad.IO.Class
+
+mkConstM :: Monad m => m b -> Wire s e m a b
+mkConstM = mkGen_ . const . fmap Right
 
 mkGen_' :: Monad m => (a -> m b) -> Wire s e m a b
 mkGen_' f = let f' x = fmap Right (f x)
