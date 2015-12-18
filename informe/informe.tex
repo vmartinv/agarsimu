@@ -132,7 +132,7 @@ AgarSimu es un simulador de una versión simplificada\footnote{Los jugadores no s
 \section{Instalación}
 Pre-requitisito SDL library. Para Ubuntu:
 \begin{lstlisting}[language=bash]
-  $ apt-get install sdl-gfx1.2-dev
+  $ apt-get install libsdl1.2-dev libsdl-gfx1.2-dev
 \end{lstlisting}
 
 Una vez instalada la SDL, descargar el simulador e ingresar en la carpeta del mismo:
@@ -148,10 +148,15 @@ El simulador se puede instalar usando cabal-install. Se puede instalarlo localme
   $ cabal install
 \end{lstlisting}
 
-O bien en una sandbox:
+O bien en una sandbox: (recomendado)
 \begin{lstlisting}[language=bash]
   $ cabal sanbox init
   $ cabal install
+\end{lstlisting}
+
+Puede ejecutar una prueba del paquete haciendo:
+\begin{lstlisting}[language=bash]
+  $ cabal test
 \end{lstlisting}
 
 Dependiendo de cuantos paquetes haya que bajar, esto suele tardar bastante, especialmente si se usa una sandbox.
