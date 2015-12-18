@@ -4,6 +4,7 @@
 *.chs.h
 *.dyn_o
 *.dyn_hi
+*.swp
 .hpc
 .hsenv
 .cabal-sandbox/
