@@ -12,6 +12,7 @@
 \usepackage{textcomp}
 \usepackage{geometry}
 \usetikzlibrary{babel}
+\usetikzlibrary{shadows}
 \usetikzlibrary{arrows} 
 \usetikzlibrary{decorations.markings}
 \usetikzlibrary{matrix,positioning,calc}
@@ -39,6 +40,23 @@
   sum/.style      = {draw, circle, node distance = 2cm}, % Adder
   input/.style    = {coordinate}, % Input
   output/.style   = {coordinate} % Output
+}
+
+\newcommand*\keystroke[1]{%
+  \tikz[baseline=(key.base)]
+    \node[%
+      draw,
+      fill=white,
+      drop shadow={shadow xshift=0.25ex,shadow yshift=-0.25ex,fill=black,opacity=0.75},
+      rectangle,
+      minimum width=0.6cm,
+      minimum height=0.5cm,
+      rounded corners=2pt,
+      inner sep=1pt,
+      line width=0.5pt,
+      font=\scriptsize\sffamily
+    ](key) {#1\strut}
+  ;
 }
 \begin{document}
 
@@ -144,10 +162,10 @@ El procedimiento es crear un builder y luego pasarselo a la función \emph{runSim
 A modo introductorio se muestra un uso simple del paquete en el archivo \mbox{\emph{test/HelloWorld.hs}}
 \subsection{Controles de la simulación}
 \begin{itemize}
-\item Para cerrar la simulación presione \emph{q}.
-\item Para hacer zoom utilice la rueda del mouse.
-\item Para mover la cámara mantenga presionado el click izquierdo y mueva el mouse.
-\item Para aumentar/disminuir la velocidad presione \emph{+}/\emph{-} del teclado númerico o bien \emph{w}/\emph{s}.
+\item Para cerrar la simulación presione \keystroke{q}.
+\item Para hacer zoom utilice la rueda del mouse\includegraphics[width=0.8cm]{mouse-wheel.png}.
+\item Para mover la cámara mantenga presionado el click izquierdo \includegraphics[width=0.8cm]{mouse-click.png} y mueva el mouse.
+\item Para aumentar/disminuir la velocidad presione \keystroke{+}/\keystroke{-} del teclado númerico o bien \keystroke{w}/\keystroke{s}.
 \end{itemize}
 \subsection{Creación de AIs}
 \begin{lstlisting}[language=haskell]
@@ -170,7 +188,7 @@ Las AI son modeladas usando wires, el tipo provisto por la librería de FRP ``Net
 \begin{lstlisting}[language=haskell]
 data Wire s e m a b
 \end{lstlisting}
-Un Wire representa una `función' reactiva\footnote{Que varía con el tiempo.}. Más específicamente, es una función que toma de argumentos:
+Un Wire representa una `función' reactiva\footnote{Cuyo comportamiento varía con el tiempo.}. Más específicamente, es una función que toma de argumentos:
 \begin{itemize}
 \item Un valor de tipo $s$ que contiene de alguna forma el tiempo transcurrido.
 \item Una valor de tipo $a$.
@@ -187,8 +205,16 @@ Visto esto podemos pensar a un Wire como:
        stepWire :: s -> a -> m (Either e b, Wire e m a b)
      }
 \end{lstlisting}
-Notar como al devolver una nueva instancia de sí mismo, el Wire puede variar su comportamiento a medida que pasa el tiempo.
-\newline
+Notar como al devolver una nueva instancia de sí mismo, el Wire puede variar su comportamiento a medida que pasa el tiempo. Si bien esta definición parece ser excesivamente complicada, efectivamente vuelve más intuitiva la semántica de los Wires.
+
+
+
+En cuanto a la creación de Wires se debe tener a mano la referencia de Netwire\footnote{mencionada en la bibliografía}, puesto que esta provee numerosas funciones para crear y combinar Wires. Por nombrar algunas:
+\begin{itemize}
+\item $(a<|>b)$ se comporta siempre como $a$ a menos que el mismo se inhiba, en cuyo caso se comporta como $b$.
+\item $(a-->b)$ se comporta como $a$ hasta que se inhiba por primera vez, luego pasa a comportarse siempre como $b$.
+\end{itemize}
+
 
 En nuestro caso la variable s es la que aconseja el paquete por defecto para llevar cuenta del tiempo, $e$ será el tipo $()$\footnote{La inhibición de la AI es equivalente a dejar de jugar, por lo que no conviene inhibirse en la mayoría de los casos.}. También se embebió la mónada Rand por sí por alguna razón se desea agregar algún comportamiento aleatorio al bot.
 
@@ -200,10 +226,69 @@ type AI = RandomWire Environment Vector
 \end{lstlisting}
 
 \section{Esquema de la simulación}
-La simulación se hizo aprovechando los Wires. En particular los mismos permiten estructurar el sistema en ``cajas negras'' que se pueden combinar para crear cajas más complejas, donde no es necesario saber que pasa dentro de cada una\footnote{con la salvedad de que se sabe sí hay side-effects o no.}.
-El siguiente esquema muestra de forma simplificada la estructura de la simulación. Cada caja representa un Wire.
-\newgeometry{left=2.5cm,right=2cm, bottom=3cm}
+La simulación se hizo aprovechando los Wires. En particular los mismos permiten estructurar el sistema en ``cajas negras'' que se pueden combinar para crear cajas más complejas.
+
+El esquema presentado en el anexo muestra de forma simplificada la estructura de la simulación, el mismo sólo indica el flujo reactivo del sistema (los argumentos estáticos de las funciones no se muestran) por cada paso de la simulación. Cada caja representa un Wire.
+
+\section{Organización del código}
+El código del simulador se encuentra en la carpeta AgarSimu. Se explica a continuación el contenido de cada módulo.
+\begin{itemize}
+\item \textbf{Input.hs} Define los wires que procesan los eventos del usuario (mouse y teclado)
+\item \textbf{Render.hs} Provee funciones para renderizar el juego en pantalla.
+\item \textbf{Bola.hs} Contiene funciones que modelan el comportamiento de una bola en el juego. Es decir como varía su posición, velocidad, control de colisiones, etc.
+\item \textbf{Core.hs} Combina los módulos listados arriba para ejecutar el juego.
+\item \textbf{Scene.hs} Define un mini EDSL para crear las escenas (el estado inicial de la simulación).
+\item \textbf{PublicEntities.hs} Define los tipos usados por el usuario final. Se separó del resto para proveer una interfaz más clara. 
+\item \textbf{PreFab.hs} Se incluyen funciones útiles que podrían ser útiles para el desarollo de las AIs. 
+\item \textbf{Utils.hs} Funciones de utilidad para los otros módulos. Aquí se definen, por ejemplo, funciones para combinar muchos wires en uno (wires de wires). 
+\end{itemize}
+
+\section{Detalles de implementación}
+\subsection{Control de velocidad}
+Como se puede apreciar en el diagrama, la velocidad controla el usuario afecta a la simulación tanto como al renderizado. Más específicamente cuando se aumenta la velocidad:
+\begin{itemize}
+\item Aumenta la velocidad de cada una de las bolas, dentro de la lógica del juego.
+\item El aumento excesivo de velocidad conduce a errores de precisión dado que la simulación en realidad es un proceso discreto. Para disminuir este efecto, se implementa otra forma de aumentar la velocidad de simulación sin perder precisión. Consiste en no renderizar todos los pasos individuales que produce la simulación. 
+\end{itemize} 
+\subsection{Posición}
+Un detalle interesente que permiten los Wires es expresar la posición de la bola como la integral de la velocidad, su implementación puede verse en \emph{Bola.hs}.
+\subsection{combine y dynMulticast}
+Para realizar \emph{aiswire} y \emph{foodGenerator} se tuvieron que crear funciones que toman un conjunto de wires y crean un wire que contiene el comportamiento de todos. Ver su implementación en \textbf{Utils.hs}, especialmente sus tipos, que son bastante intuitivos.
+
+\section{Bibliografía}
+\begin{itemize}
+\item Introducción a FRP
+\begin{itemize}
+\item Lambda Jam 2015 - Conal Elliott - The Essence and Origins of Functional Reactive Programming,
+\url{https://www.youtube.com/watch?v=j3Q32brCUAI}
+\item Lambda Jam 2015 - Conal Elliott - A More Elegant Specification for FRP, \url{https://www.youtube.com/watch?v=teRC_Lf61Gw}
+\end{itemize}
+\item Arrows
+\begin{itemize}
+\item Haskell/Arrow tutorial, \url{https://en.wikibooks.org/wiki/Haskell/Arrow_tutorial}
+\item How does ArrowLoop work? Also, mfix?, \url{http://stackoverflow.com/questions/6976944/how-does-arrowloop-work-also-mfix}
+\item How does this definition of ArrowLoop.loop work?, \url{http://stackoverflow.com/questions/9856342/how-does-this-definition-of-arrowloop-loop-work}
+\item GHC Language Features, Arrow notation, \url{https://downloads.haskell.org/~ghc/7.8.4/docs/html/users_guide/arrow-notation.html}
+\end{itemize}
+\item Wires
+\begin{itemize}
+\item Oliver Charles Blog, Getting Started with Netwire and SDL, \url{https://ocharles.org.uk/blog/posts/2013-08-01-getting-started-with-netwire-and-sdl.html}
+\item Today in Code, Almost a Netwire 5 Tutorial, \url{http://todayincode.tumblr.com/post/96914679355/almost-a-netwire-5-tutorial}
+\item Readme de Netwire, \url{http://hackage.haskell.org/package/netwire-5.0.1#readme}
+\item Referencia de Netwire, \url{hackage.haskell.org/package/netwire-5.0.1}
+
+\end{itemize}
+\item Juegos de ejemplo
+\begin{itemize}
+\item Oliver Charles Blog, Asteroids \& Netwire, \url{
+https://ocharles.org.uk/blog/posts/2013-08-18-asteroids-in-netwire.html}
+\item Nathan Hüsken Blog, Breakout - Improved and with netwire, \url{http://jshaskell.blogspot.com.ar/2012/11/breakout-improved-and-with-netwire.html}
+\end{itemize}
+\end{itemize}
+
+\newgeometry{left=2.5cm,right=1cm, bottom=3cm}
 \begin{landscape}
+\section*{Anexo: Esquema de la simulación}
 \begin{tikzpicture}[auto, thick, node distance=2cm, >=triangle 45]
 \draw
 	node at (0, 0)[block] (readEvents) {readEvents}
@@ -261,10 +346,10 @@ El siguiente esquema muestra de forma simplificada la estructura de la simulació
 	\draw[->](f2) -- node{Bola}(suma2);
 	\draw[->](f3) -| node[near end]{Bola}(suma2);
 	\draw[->] (14.8,-3.8) -| node[near end]{[Bola]}(suma3);
-	\draw[->] (7,3.11) |- (f3);
-	\draw[->] (7,3.11) |- (f2);
-	\draw[->] (7,3.11) |- (f1);
-	\draw[->] (speedHandler) -- node[near end]{speed}(7, 2);
+	\draw[->] (suma1) -- (14.3,2) -- (14.3,-0.5)--(7,-0.5) -- (7, -2) |- (f3);
+	\draw[->] (suma1) -- (14.3,2) -- (14.3,-0.5)--(7,-0.5) -- (7, -2) |- (f2);
+	\draw[->] (suma1) -- (14.3,2) -- (14.3,-0.5)--(7,-0.5) -- node[near end]{[Bola]}(7, -2) |- (f1);
+	\draw[->] (speedHandler) -- node[below,near end]{speed}(input4);
 	
 	\draw [thick](6.5,-7) rectangle (17,8.5);
 	\node at (6.5,8) [above=5mm, right=0mm] {\textsc{gameLogic}};
@@ -276,60 +361,4 @@ El siguiente esquema muestra de forma simplificada la estructura de la simulació
 \end{tikzpicture}
 \end{landscape}
 \restoregeometry
-
-\section{Organización del código}
-El código del simulador se encuentra en la carpeta AgarSimu. Se explica a continuación el contenido de cada módulo.
-\begin{itemize}
-\item \textbf{Input.hs} Define los wires que procesan los eventos del usuario (mouse y teclado)
-\item \textbf{Render.hs} Provee funciones para renderizar el juego en pantalla.
-\item \textbf{Bola.hs} Contiene funciones que modelan el comportamiento de una bola en el juego. Es decir como varía su posición, velocidad, control de colisiones, etc.
-\item \textbf{Core.hs} Combina los módulos listados arriba para ejecutar el juego.
-\item \textbf{Scene.hs} Define un mini EDSL para crear las escenas (el estado inicial de la simulación).
-\item \textbf{PublicEntities.hs} Define los tipos usados por el usuario final. Se separó del resto para proveer una interfaz más clara. 
-\item \textbf{PreFab.hs} Se incluyen funciones útiles que podrían ser útiles para el desarollo de las AIs. 
-\item \textbf{Utils.hs} Funciones de utilidad para los otros módulos. Aquí se definen, por ejemplo, funciones para combinar muchos wires en uno (wires de wires). 
-\end{itemize}
-
-\section{Detalles de implementación}
-\subsection{Velocidad}
-Como se puede apreciar en el diagrama, la velocidad afecta a la simulación tanto como al renderizado. Más específicamente cuando se aumenta la velocidad:
-\begin{itemize}
-\item Aumenta la velocidad de cada una de las bolas, dentro de la lógica del juego.
-\item El aumento excesivo de velocidad conduce a errores de precisión dado que la simulación en realidad es un proceso discreto. Para disminuir este efecto, se implementa otra forma de aumentar la velocidad de simulación sin perder precisión. Consiste en no renderizar todos los pasos individuales que produce la simulación. 
-\end{itemize} 
-\subsection{combine y dynMulticast}
-Para realizar \emph{aiswire} y \emph{foodGenerator} se tuvieron que crear funciones que toman un conjunto de wires y crean un wire que contiene el comportamiento de todos. Ver su implementación en \textbf{Utils.hs}, especialmente sus tipos, que son bastante intuitivos.
-
-\section{Bibliografía}
-\begin{itemize}
-\item Introducción a FRP
-\begin{itemize}
-\item Lambda Jam 2015 - Conal Elliott - The Essence and Origins of Functional Reactive Programming,
-\url{https://www.youtube.com/watch?v=j3Q32brCUAI}
-\item Lambda Jam 2015 - Conal Elliott - A More Elegant Specification for FRP, \url{https://www.youtube.com/watch?v=teRC_Lf61Gw}
-\end{itemize}
-\item Arrows
-\begin{itemize}
-\item Haskell/Arrow tutorial, \url{https://en.wikibooks.org/wiki/Haskell/Arrow_tutorial}
-\item How does ArrowLoop work? Also, mfix?, \url{http://stackoverflow.com/questions/6976944/how-does-arrowloop-work-also-mfix}
-\item How does this definition of ArrowLoop.loop work?, \url{http://stackoverflow.com/questions/9856342/how-does-this-definition-of-arrowloop-loop-work}
-\item GHC Language Features, Arrow notation, \url{https://downloads.haskell.org/~ghc/7.8.4/docs/html/users_guide/arrow-notation.html}
-\end{itemize}
-\item Wires
-\begin{itemize}
-\item Oliver Charles Blog, Getting Started with Netwire and SDL, \url{https://ocharles.org.uk/blog/posts/2013-08-01-getting-started-with-netwire-and-sdl.html}
-\item Today in Code, Almost a Netwire 5 Tutorial, \url{http://todayincode.tumblr.com/post/96914679355/almost-a-netwire-5-tutorial}
-\item Readme de Netwire, \url{http://hackage.haskell.org/package/netwire-5.0.1#readme}
-\item Referencia de Netwire, \url{hackage.haskell.org/package/netwire-5.0.1}
-
-\end{itemize}
-\item Juegos de ejemplo
-\begin{itemize}
-\item Oliver Charles Blog, Asteroids \& Netwire, \url{
-https://ocharles.org.uk/blog/posts/2013-08-18-asteroids-in-netwire.html}
-\item Nathan Hüsken Blog, Breakout - Improved and with netwire, \url{http://jshaskell.blogspot.com.ar/2012/11/breakout-improved-and-with-netwire.html}
-\end{itemize}
-\end{itemize}
-
-
 \end{document}

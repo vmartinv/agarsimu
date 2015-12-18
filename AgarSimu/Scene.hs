@@ -58,10 +58,10 @@ addBolas :: AI -> [Bola] -> Builder ()
 addBolas ai bolas = sequence (map (addBola ai) bolas) >> return ()
 
 versus :: AI -> AI -> Builder ()
-versus ai1 ai2 = do setWorldSize (200, 200)
-                    setWindowSize (1024, 768)
-                    bolas1 <- newBolas 20 (15, 150)
-                    bolas2 <- newBolas 20 (15, 150)
+versus ai1 ai2 = do setWorldSize (100, 100)
+                    setWindowSize (600, 600)
+                    bolas1 <- newBolas 20 (15, 30)
+                    bolas2 <- newBolas 20 (15, 30)
                     let col1 = rgb 0x07 0xff 0xb0
                         col2 = rgb 0xe4 0x07 0xff
                     addBolas ai1 (map (set bolColor col1) bolas1)

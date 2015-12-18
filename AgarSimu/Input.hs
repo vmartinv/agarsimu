@@ -27,8 +27,8 @@ quitHandler = pure () . when (not.(any (isKeyDown SDL.SDLK_q)))
 
 speedHandler :: WireP s e [SDL.Event] Double
 speedHandler = foldlWire (const upd) 1 . (id &&& id)
-    where upd x ev | isKeyDown SDL.SDLK_KP_PLUS ev = x*con
-          upd x ev | isKeyDown SDL.SDLK_KP_MINUS ev = max 0.0001 (x/con)
+    where upd x ev | isKeyDown SDL.SDLK_KP_PLUS ev || isKeyDown SDL.SDLK_w ev = x*con
+          upd x ev | isKeyDown SDL.SDLK_KP_MINUS ev || isKeyDown SDL.SDLK_s ev = max 0.0001 (x/con)
           upd x _ = x
           con = 1.6
  
