@@ -71,7 +71,9 @@ drawCam :: Camera -> (SDL.Surface -> a) -> a
 drawCam cam f = f (view camSurf cam)
 --------------------------------------------------------------------------------
 withPrepareRendering :: WorldConsts -> Int -> (Camera -> IO a) -> IO a
-withPrepareRendering wc fps f = SDL.withInit [SDL.InitEverything] (defCam wc fps >>= f)
+withPrepareRendering wc fps f = SDL.withInit [SDL.InitEverything] $ do
+        SDL.setCaption "AgarSimu" ""
+        defCam wc fps >>= f
 
 renderLogic :: Monoid e =>
     WorldConsts ->
