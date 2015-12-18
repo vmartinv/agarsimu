@@ -30,7 +30,7 @@ defFPS = 60
 
 runSimulation :: Builder a -> IO ()
 runSimulation builder = do
-    g' <- getStdGen
+    g' <- newStdGen
     let ((wc,players), g) = getScene builder g'
     withPrepareRendering wc defFPS $ \cam -> do
         let inputwire = inputLogic cam

@@ -15,7 +15,7 @@ module AgarSimu.PreFab
     
       -- * Wire constructor
     , liftAI
-    , mkStateW
+    , liftAISF
       
       -- * Random
     , randomW
@@ -59,11 +59,11 @@ biggest otros = maximumBy byMass otros
 chase :: Bola -> Bola -> Vector
 chase yo otro = normalized $ (uncurry (^-^)) $ view (bolPos `alongside` bolPos) (otro, yo)
 
-liftAI :: (Vector -> Bola -> [Bola] -> Vector) -> RandomWire Environment Vector
+liftAI :: (Vector -> Bola -> [Bola] -> Vector) -> AI
 liftAI f = mkSF_ $ \(ws, yo, otros) -> f ws yo otros
     
-mkStateW :: m -> (Environment -> State m Vector) -> RandomWire Environment Vector
-mkStateW init f = loop $ mkSF_ (uncurry runState) . first (mkSF_ f) . second (delay init)
+liftAISF :: m -> (Environment -> State m Vector) -> AI
+liftAISF init f = loop $ mkSF_ (uncurry runState) . first (mkSF_ f) . second (delay init)
 
 randomW :: (MonadRandom m, Random b) => Wire s e m a b
 randomW = mkConstM getRandom

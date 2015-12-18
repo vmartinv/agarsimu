@@ -8,6 +8,10 @@
 
 module AgarSimu.PublicEntities
     ( Vector
+    
+      -- * World
+    , WorldConsts(..)
+    , worlSize, worlWindowSize
 
       -- * Bola
     , Bola(..)
@@ -40,6 +44,12 @@ import Control.Wire hiding ((.))
 import AgarSimu.Utils
 
 type Vector = (Double, Double)
+
+--------------------------------------------------------------------------------
+data WorldConsts = WorldConsts { _worlSize :: !Vector
+                               , _worlWindowSize :: !(Int, Int)
+                               } deriving Show
+$(makeLenses ''WorldConsts)
 
 --------------------------------------------------------------------------------
 data Bola = Bola { _bolColor :: !SDL.Pixel
@@ -81,7 +91,7 @@ getRgb (SDL.Pixel p) = ( md $ p `div` 2^24
     where md b = fromIntegral (b `mod` 2^8)
 
 --------------------------------------------------------------------------------
-type Time = NominalDiffTime
 type Environment = (Vector, Bola, [Bola])
+type Time = NominalDiffTime
 type RandomWire = Wire (Timed Time ()) () (Rand StdGen)
 type AI = RandomWire Environment Vector

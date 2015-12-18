@@ -1,17 +1,11 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -funbox-strict-fields #-}
 -- Module:     AgarSimu.Scene
 -- Copyright:  (c) 2015 Martin Villagra
 -- License:    BSD3
 -- Maintainer: Martin Villagra <mvillagra0@gmail.com>
 
 module AgarSimu.Scene
-    ( -- * World
-      WorldConsts(..)
-    , worlSize, worlWindowSize
-    
-      -- * Scene
-    , Scene
+    ( -- * Scene
+      Scene
     , Builder
     , setWindowSize
     , setWorldSize
@@ -32,12 +26,6 @@ import Control.Monad.Random
 import Control.Arrow
 import Control.Lens hiding (at, perform, wrapped)
 import AgarSimu.PublicEntities
-import qualified Graphics.UI.SDL as SDL (Pixel(..))
-
-data WorldConsts = WorldConsts { _worlSize :: !Vector
-                               , _worlWindowSize :: !(Int, Int)
-                               } deriving Show
-$(makeLenses ''WorldConsts)
 
 type Scene = (WorldConsts, [(AI, Bola)])
 type Builder a = StateT Scene (Rand StdGen) a
@@ -71,9 +59,9 @@ addBolas ai bolas = sequence (map (addBola ai) bolas) >> return ()
 
 versus :: AI -> AI -> Builder ()
 versus ai1 ai2 = do setWorldSize (200, 200)
-                    setWindowSize (600, 600)
-                    bolas1 <- newBolas 20 (15, 30)
-                    bolas2 <- newBolas 20 (15, 30)
+                    setWindowSize (1024, 768)
+                    bolas1 <- newBolas 20 (15, 150)
+                    bolas2 <- newBolas 20 (15, 150)
                     let col1 = rgb 0x07 0xff 0xb0
                         col2 = rgb 0xe4 0x07 0xff
                     addBolas ai1 (map (set bolColor col1) bolas1)
