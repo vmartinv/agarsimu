@@ -207,7 +207,7 @@ Visto esto podemos pensar a un Wire como:
 \begin{lstlisting}[language=haskell]
  newtype Wire s e m a b =
      Wire {
-       stepWire :: s -> a -> m (Either e b, Wire e m a b)
+       stepWire :: s -> a -> m (Either e b, Wire s e m a b)
      }
 \end{lstlisting}
 Notar como al devolver una nueva instancia de sí mismo, el Wire puede variar su comportamiento a medida que pasa el tiempo. Si bien esta definición parece ser excesivamente complicada, efectivamente vuelve más intuitiva la semántica de los Wires.
