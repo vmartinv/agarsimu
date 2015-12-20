@@ -49,7 +49,7 @@ randomBola (wx, wy) m = let r = massToRadio m
                               return $ Bola col (x, y) m
 
 newBolas :: Int -> (Double, Double) -> Builder [Bola]
-newBolas n range = sequence $ replicate n (newBola range)
+newBolas n range = sequence $ [newBola range | i<-[1..n]]
 
 addBola :: AI -> Bola -> Builder ()
 addBola ai bola = modify $ second ((ai, bola):)

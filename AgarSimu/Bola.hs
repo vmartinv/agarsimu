@@ -37,7 +37,7 @@ mkBolaVec s b v = s' *^ normalized ^/ r
     where r = (view bolMass b)**0.4
           normalized = let m = magnitude v
                        in if m>1 then v^/m else v
-          s' = 110*s
+          s' = 80*s
 
 collideBola :: [Bola] -> Bola -> Maybe Double
 collideBola others me = if any (`eats'` me) others
