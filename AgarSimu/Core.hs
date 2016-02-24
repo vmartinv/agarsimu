@@ -46,8 +46,9 @@ gameLogic :: Scene -> RandomWire Double [Bola]
 gameLogic (wc, players) = proc speed -> do
         rec
             oldBolas <- delay inits -< bolas
+            oldFood <- delay [] -< food
             food <- foodGenerator (view worlSize wc) -< oldBolas
-            bolas <- aiswire -< map (\e -> (speed, e++food)) (mkEnvs oldBolas)
+            bolas <- aiswire -< map (\e -> (speed, e++oldFood)) (mkEnvs oldBolas)
         returnA -<  food ++ bolas
     where inits = map snd players
           aiswire = combine $ map (bolaLogic wc) players
