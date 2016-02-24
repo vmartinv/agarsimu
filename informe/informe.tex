@@ -76,8 +76,8 @@
 %----------------------------------------------------------------------------------------
 
 \textsc{\LARGE Universidad Nacional de Rosario}\\[0.5cm] % Name of your university/college
-\textsc{\Large Ciencias de la Computación}\\[1.5cm] % Major heading such as course name
-\textsc{\Large Análisis de Lenguajes de Programación}\\[0.5cm] % Major heading such as course name
+\textsc{\Large Ciencias de la ComputaciÃ³n}\\[1.5cm] % Major heading such as course name
+\textsc{\Large AnÃ¡lisis de Lenguajes de ProgramaciÃ³n}\\[0.5cm] % Major heading such as course name
 \textsc{\large Trabajo Final}\\[0.5cm] % Minor heading such as course title
 
 
@@ -96,7 +96,7 @@
 %\begin{minipage}{0.4\textwidth}
 %\begin{flushleft} \large
 %\emph{Autor}\\
-%\textsc{Martín Villagra} % Your name
+%\textsc{MartÃ­n Villagra} % Your name
 %\end{flushleft}
 %\end{minipage}
 
@@ -109,7 +109,7 @@
 
 % If you don't want a supervisor, uncomment the two lines below and remove the section above
 \Large \emph{Autor}\\
-\textsc{Martín Villagra}\\[1cm] % Your name
+\textsc{MartÃ­n Villagra}\\[1cm] % Your name
 
 %----------------------------------------------------------------------------------------
 %   DATE SECTION
@@ -127,9 +127,9 @@
 
 \end{titlepage}
 
-\section{Descripción}
-AgarSimu es un simulador de una versión simplificada\footnote{Los jugadores no se pueden dividir o regalar masa.} del popular juego agar.io\footnote{\url{https://en.wikipedia.org/wiki/Agar.io}, \url{http://agar.io}}. Provee una interfaz para diseñar inteligencias artificiales\footnote{\url{https://en.wikipedia.org/wiki/Artificial_intelligence}} (o más específicamente bots\footnote{\url{https://en.wikipedia.org/wiki/Video_game_bot}}) que responden a su entorno y la evolución del mismo en el tiempo. A su vez permite ejecutar estos agentes en conjunto dentro de un mundo (instancia del juego).
-\section{Instalación}
+\section{DescripciÃ³n}
+AgarSimu es un simulador de una versiÃ³n simplificada\footnote{Los jugadores no se pueden dividir o regalar masa.} del popular juego agar.io\footnote{\url{https://en.wikipedia.org/wiki/Agar.io}, \url{http://agar.io}}. Provee una interfaz para diseÃ±ar inteligencias artificiales\footnote{\url{https://en.wikipedia.org/wiki/Artificial_intelligence}} (o mÃ¡s especÃ­ficamente bots\footnote{\url{https://en.wikipedia.org/wiki/Video_game_bot}}) que responden a su entorno y la evoluciÃ³n del mismo en el tiempo. A su vez permite ejecutar estos agentes en conjunto dentro de un mundo (instancia del juego).
+\section{InstalaciÃ³n}
 Pre-requitisito SDL library. Para Ubuntu:
 \begin{lstlisting}[language=bash]
   $ apt-get install libsdl1.2-dev libsdl-gfx1.2-dev
@@ -161,46 +161,46 @@ Puede ejecutar una prueba del paquete haciendo:
 
 Dependiendo de cuantos paquetes haya que bajar, esto suele tardar bastante, especialmente si se usa una sandbox.
 \section{Tutorial de uso}
-\subsection{Ejecutar la simulación}
-El procedimiento es crear un builder y luego pasarselo a la función \emph{runSimulation}. Un builder crea el estado inicial de la simulación. Este estado contiene las bolas y las AI asociadas a cada cada una de las bolas.
+\subsection{Ejecutar la simulaciÃ³n}
+El procedimiento es crear un builder y luego pasarselo a la funciÃ³n \emph{runSimulation}. Un builder crea el estado inicial de la simulaciÃ³n. Este estado contiene las bolas y las AI asociadas a cada cada una de las bolas.
 
 A modo introductorio se muestra un uso simple del paquete en el archivo \mbox{\emph{test/HelloWorld.hs}}
-\subsection{Controles de la simulación}
+\subsection{Controles de la simulaciÃ³n}
 \begin{itemize}
-\item Para cerrar la simulación presione \keystroke{q}.
+\item Para cerrar la simulaciÃ³n presione \keystroke{q}.
 \item Para hacer zoom utilice la rueda del mouse\includegraphics[width=0.8cm]{mouse-wheel.png}.
-\item Para mover la cámara mantenga presionado el click izquierdo \includegraphics[width=0.8cm]{mouse-click.png} y mueva el mouse.
-\item Para aumentar/disminuir la velocidad presione \keystroke{+}/\keystroke{-} del teclado númerico o bien \keystroke{w}/\keystroke{s}.
+\item Para mover la cÃ¡mara mantenga presionado el click izquierdo \includegraphics[width=0.8cm]{mouse-click.png} y mueva el mouse.
+\item Para aumentar/disminuir la velocidad presione \keystroke{+}/\keystroke{-} del teclado nÃºmerico o bien \keystroke{w}/\keystroke{s}.
 \end{itemize}
-\subsection{Creación de AIs}
+\subsection{CreaciÃ³n de AIs}
 \begin{lstlisting}[language=haskell]
 type Vector = (Double, Double)
 type Environment = (Vector, Bola, [Bola])
 \end{lstlisting}
-Para nuestros fines, una AI es una función que recibe la información de su entorno y devuelve la dirección en la que moverse. Vamos a definir el entorno como una una tripleta (Vector, Bola, [Bola]) que representa respectivamente el tamaño del mapa, información referente a la bola que controla la AI e información de las otras bolas.
-Si no nos interesa el factor tiempo en nuestro bot, podemos utilizar la función \emph{liftAI}:
+Para nuestros fines, una AI es una funciÃ³n que recibe la informaciÃ³n de su entorno y devuelve la direcciÃ³n en la que moverse. Vamos a definir el entorno como una una tripleta (Vector, Bola, [Bola]) que representa respectivamente el tamaÃ±o del mapa, informaciÃ³n referente a la bola que controla la AI e informaciÃ³n de las otras bolas.
+Si no nos interesa el factor tiempo en nuestro bot, podemos utilizar la funciÃ³n \emph{liftAI}:
 \begin{lstlisting}[language=haskell]
 liftAI :: (Environment -> Vector) -> AI
 \end{lstlisting}
-Si queremos tener una especie de memoria o estado, pero sin preocuparnos por el factor tiempo, se provee la función \emph{liftAISF}:
+Si queremos tener una especie de memoria o estado, pero sin preocuparnos por el factor tiempo, se provee la funciÃ³n \emph{liftAISF}:
 \begin{lstlisting}[language=haskell]
 -- | Tenemos que aportar el estado inicial ahora
 liftAISF :: m -> (Environment -> State m Vector) -> AI
 \end{lstlisting}
-Para los casos en los que si importe el tiempo, tenemos que recurrir a una definición más poderosa que se verá a continuación.
+Para los casos en los que si importe el tiempo, tenemos que recurrir a una definiciÃ³n mÃ¡s poderosa que se verÃ¡ a continuaciÃ³n.
 \subsubsection{Wires con Netwire}
-Las AI son modeladas usando wires, el tipo provisto por la librería de FRP ``Netwire''. Se recomienda leer la bibliografía presentada al final para un mejor entendimiento. Un Wire, que es un tipo especial de Arrow autómata, viene dado por el tipo:
+Las AI son modeladas usando wires, el tipo provisto por la librerÃ­a de FRP ``Netwire''. Se recomienda leer la bibliografÃ­a presentada al final para un mejor entendimiento. Un Wire, que es un tipo especial de Arrow autÃ³mata, viene dado por el tipo:
 \begin{lstlisting}[language=haskell]
 data Wire s e m a b
 \end{lstlisting}
-Un Wire representa una `función' reactiva\footnote{Cuyo comportamiento varía con el tiempo.}. Más específicamente, es una función que toma de argumentos:
+Un Wire representa una `funciÃ³n' reactiva\footnote{Cuyo comportamiento varÃ­a con el tiempo.}. MÃ¡s especÃ­ficamente, es una funciÃ³n que toma de argumentos:
 \begin{itemize}
 \item Un valor de tipo $s$ que contiene de alguna forma el tiempo transcurrido.
 \item Una valor de tipo $a$.
 \end{itemize}
 De estos argumentos el Wire:
 \begin{itemize}
-\item O bien devuelve un valor de tipo $a$ o se `inhibe' con un valor de tipo $e$ (\textbf{e}rror).
+\item O bien devuelve un valor de tipo $b$ o se `inhibe' con un valor de tipo $e$ (\textbf{e}rror).
 \item Crea un nuevo Wire s e m a b.
 \end{itemize}
 Visto esto podemos pensar a un Wire como:
@@ -210,18 +210,18 @@ Visto esto podemos pensar a un Wire como:
        stepWire :: s -> a -> m (Either e b, Wire s e m a b)
      }
 \end{lstlisting}
-Notar como al devolver una nueva instancia de sí mismo, el Wire puede variar su comportamiento a medida que pasa el tiempo. Si bien esta definición parece ser excesivamente complicada, efectivamente vuelve más intuitiva la semántica de los Wires.
+Notar como al devolver una nueva instancia de sÃ­ mismo, el Wire puede variar su comportamiento a medida que pasa el tiempo. Si bien esta definiciÃ³n parece ser excesivamente complicada, efectivamente vuelve mÃ¡s intuitiva la semÃ¡ntica de los Wires.
 
 
 
-En cuanto a la creación de Wires se debe tener a mano la referencia de Netwire\footnote{mencionada en la bibliografía}, puesto que esta provee numerosas funciones para crear y combinar Wires. Por nombrar algunas:
+En cuanto a la creaciÃ³n de Wires se debe tener a mano la referencia de Netwire\footnote{mencionada en la bibliografÃ­a}, puesto que esta provee numerosas funciones para crear y combinar Wires. Por nombrar algunas:
 \begin{itemize}
 \item $(a<|>b)$ se comporta siempre como $a$ a menos que el mismo se inhiba, en cuyo caso se comporta como $b$.
 \item $(a-->b)$ se comporta como $a$ hasta que se inhiba por primera vez, luego pasa a comportarse siempre como $b$.
 \end{itemize}
 
 
-En nuestro caso la variable s es la que aconseja el paquete por defecto para llevar cuenta del tiempo, $e$ será el tipo $()$\footnote{La inhibición de la AI es equivalente a dejar de jugar, por lo que no conviene inhibirse en la mayoría de los casos.}. También se embebió la mónada Rand por sí por alguna razón se desea agregar algún comportamiento aleatorio al bot.
+En nuestro caso la variable s es la que aconseja el paquete por defecto para llevar cuenta del tiempo, $e$ serÃ¡ el tipo $()$\footnote{La inhibiciÃ³n de la AI es equivalente a dejar de jugar, por lo que no conviene inhibirse en la mayorÃ­a de los casos.}. TambiÃ©n se embebiÃ³ la mÃ³nada Rand por sÃ­ por alguna razÃ³n se desea agregar algÃºn comportamiento aleatorio al bot.
 
 Con lo ya dicho podemos mostrar finalmente el tipo de las AI:
 \begin{lstlisting}[language=haskell]
@@ -230,39 +230,39 @@ type RandomWire = Wire (Timed Time ()) () (Rand StdGen)
 type AI = RandomWire Environment Vector
 \end{lstlisting}
 
-\section{Esquema de la simulación}
-La simulación se hizo aprovechando los Wires. En particular los mismos permiten estructurar el sistema en ``cajas negras'' que se pueden combinar para crear cajas más complejas.
+\section{Esquema de la simulaciÃ³n}
+La simulaciÃ³n se hizo aprovechando los Wires. En particular los mismos permiten estructurar el sistema en ``cajas negras'' que se pueden combinar para crear cajas mÃ¡s complejas.
 
-El esquema presentado en el anexo muestra de forma simplificada la estructura de la simulación, el mismo sólo indica el flujo reactivo del sistema (los argumentos estáticos de las funciones no se muestran) por cada paso de la simulación. Cada caja representa un Wire.
+El esquema presentado en el anexo muestra de forma simplificada la estructura de la simulaciÃ³n, el mismo sÃ³lo indica el flujo reactivo del sistema (los argumentos estÃ¡ticos de las funciones no se muestran) por cada paso de la simulaciÃ³n. Cada caja representa un Wire.
 
-\section{Organización del código}
-El código del simulador se encuentra en la carpeta AgarSimu. Se explica a continuación el contenido de cada módulo.
+\section{OrganizaciÃ³n del cÃ³digo}
+El cÃ³digo del simulador se encuentra en la carpeta AgarSimu. Se explica a continuaciÃ³n el contenido de cada mÃ³dulo.
 \begin{itemize}
 \item \textbf{Input.hs} Define los wires que procesan los eventos del usuario (mouse y teclado)
 \item \textbf{Render.hs} Provee funciones para renderizar el juego en pantalla.
-\item \textbf{Bola.hs} Contiene funciones que modelan el comportamiento de una bola en el juego. Es decir como varía su posición, velocidad, control de colisiones, etc.
-\item \textbf{Core.hs} Combina los módulos listados arriba para ejecutar el juego.
-\item \textbf{Scene.hs} Define un mini EDSL para crear las escenas (el estado inicial de la simulación).
-\item \textbf{PublicEntities.hs} Define los tipos usados por el usuario final. Se separó del resto para proveer una interfaz más clara. 
-\item \textbf{PreFab.hs} Se incluyen funciones útiles que podrían ser útiles para el desarollo de las AIs. 
-\item \textbf{Utils.hs} Funciones de utilidad para los otros módulos. Aquí se definen, por ejemplo, funciones para combinar muchos wires en uno (wires de wires). 
+\item \textbf{Bola.hs} Contiene funciones que modelan el comportamiento de una bola en el juego. Es decir como varÃ­a su posiciÃ³n, velocidad, control de colisiones, etc.
+\item \textbf{Core.hs} Combina los mÃ³dulos listados arriba para ejecutar el juego.
+\item \textbf{Scene.hs} Define un mini EDSL para crear las escenas (el estado inicial de la simulaciÃ³n).
+\item \textbf{PublicEntities.hs} Define los tipos usados por el usuario final. Se separÃ³ del resto para proveer una interfaz mÃ¡s clara. 
+\item \textbf{PreFab.hs} Se incluyen funciones Ãºtiles que podrÃ­an ser Ãºtiles para el desarollo de las AIs. 
+\item \textbf{Utils.hs} Funciones de utilidad para los otros mÃ³dulos. AquÃ­ se definen, por ejemplo, funciones para combinar muchos wires en uno (wires de wires). 
 \end{itemize}
 
-\section{Detalles de implementación}
+\section{Detalles de implementaciÃ³n}
 \subsection{Control de velocidad}
-Como se puede apreciar en el diagrama, la velocidad controla el usuario afecta a la simulación tanto como al renderizado. Más específicamente cuando se aumenta la velocidad:
+Como se puede apreciar en el diagrama, la velocidad controla el usuario afecta a la simulaciÃ³n tanto como al renderizado. MÃ¡s especÃ­ficamente cuando se aumenta la velocidad:
 \begin{itemize}
-\item Aumenta la velocidad de cada una de las bolas, dentro de la lógica del juego.
-\item El aumento excesivo de velocidad conduce a errores de precisión dado que la simulación en realidad es un proceso discreto. Para disminuir este efecto, se implementa otra forma de aumentar la velocidad de simulación sin perder precisión. Consiste en no renderizar todos los pasos individuales que produce la simulación. 
+\item Aumenta la velocidad de cada una de las bolas, dentro de la lÃ³gica del juego.
+\item El aumento excesivo de velocidad conduce a errores de precisiÃ³n dado que la simulaciÃ³n en realidad es un proceso discreto. Para disminuir este efecto, se implementa otra forma de aumentar la velocidad de simulaciÃ³n sin perder precisiÃ³n. Consiste en no renderizar todos los pasos individuales que produce la simulaciÃ³n. 
 \end{itemize} 
-\subsection{Posición}
-Un detalle interesente que permiten los Wires es expresar la posición de la bola como la integral de la velocidad, su implementación puede verse en \emph{Bola.hs}.
+\subsection{PosiciÃ³n}
+Un detalle interesente que permiten los Wires es expresar la posiciÃ³n de la bola como la integral de la velocidad, su implementaciÃ³n puede verse en \emph{Bola.hs}.
 \subsection{combine y dynMulticast}
-Para realizar \emph{aiswire} y \emph{foodGenerator} se tuvieron que crear funciones que toman un conjunto de wires y crean un wire que contiene el comportamiento de todos. Ver su implementación en \textbf{Utils.hs}, especialmente sus tipos, que son bastante intuitivos.
+Para realizar \emph{aiswire} y \emph{foodGenerator} se tuvieron que crear funciones que toman un conjunto de wires y crean un wire que contiene el comportamiento de todos. Ver su implementaciÃ³n en \textbf{Utils.hs}, especialmente sus tipos, que son bastante intuitivos.
 
-\section{Bibliografía}
+\section{BibliografÃ­a}
 \begin{itemize}
-\item Introducción a FRP
+\item IntroducciÃ³n a FRP
 \begin{itemize}
 \item Lambda Jam 2015 - Conal Elliott - The Essence and Origins of Functional Reactive Programming,
 \url{https://www.youtube.com/watch?v=j3Q32brCUAI}
@@ -287,13 +287,13 @@ Para realizar \emph{aiswire} y \emph{foodGenerator} se tuvieron que crear funcio
 \begin{itemize}
 \item Oliver Charles Blog, Asteroids \& Netwire, \url{
 https://ocharles.org.uk/blog/posts/2013-08-18-asteroids-in-netwire.html}
-\item Nathan Hüsken Blog, Breakout - Improved and with netwire, \url{http://jshaskell.blogspot.com.ar/2012/11/breakout-improved-and-with-netwire.html}
+\item Nathan HÃ¼sken Blog, Breakout - Improved and with netwire, \url{http://jshaskell.blogspot.com.ar/2012/11/breakout-improved-and-with-netwire.html}
 \end{itemize}
 \end{itemize}
 
 \newgeometry{left=2.5cm,right=1cm, bottom=3cm}
 \begin{landscape}
-\section*{Anexo: Esquema de la simulación}
+\section*{Anexo: Esquema de la simulaciÃ³n}
 \begin{tikzpicture}[auto, thick, node distance=2cm, >=triangle 45]
 \draw
 	node at (0, 0)[block] (readEvents) {readEvents}
