@@ -75,7 +75,7 @@ randomDir :: RandomWire a Vector
 randomDir = go . randomWR (-pi, pi)
 
 go :: RandomWire Double Vector
-go = arr sin &&& arr cos
+go = arr cos &&& arr sin
 
 stop :: RandomWire a Vector
 stop = pure (0, 0)
