@@ -9,6 +9,7 @@ module AgarSimu.Scene
     , Builder
     , setWindowSize
     , setWorldSize
+    , setFullScreen
     
     , newBola
     , randomBola
@@ -35,6 +36,9 @@ setWindowSize ws = modify $ first (set worlWindowSize ws)
 
 setWorldSize :: Vector -> Builder ()
 setWorldSize ws = modify $ first (set worlSize ws)
+
+setFullScreen :: Bool -> Builder ()
+setFullScreen b = modify $ first (set worlFullScreen b)
 
 newBola :: (Double, Double) -> Builder Bola
 newBola range = do ws <- gets $ (view worlSize).fst
@@ -69,5 +73,5 @@ versus ai1 ai2 = do setWorldSize (100, 100)
 
 getScene :: Builder a -> StdGen -> (Scene, StdGen)
 getScene b g = runRand (execStateT b (defWorldConsts, [])) g
-    where defWorldConsts = WorldConsts (100, 100) (400, 400)
+    where defWorldConsts = WorldConsts (100, 100) (400, 400) False
 

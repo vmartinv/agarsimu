@@ -50,7 +50,7 @@ camMove cam v = over camPos (^-^ v ^/ (view camZoom cam)) cam
     
 defCam :: WorldConsts -> Int -> IO Camera
 defCam w fps = do
-        screen <- SDL.setVideoMode vx' vy' 0 [SDL.SWSurface]--, SDL.Fullscreen]
+        screen <- SDL.setVideoMode vx' vy' 0 ([SDL.SWSurface]++(if fs then [SDL.SWSurface, SDL.Fullscreen] else []))
         frameRate <- Framerate.new
         Framerate.init frameRate
         Framerate.set frameRate fps
@@ -58,6 +58,7 @@ defCam w fps = do
     where (wx, wy) = view worlSize w
           (vx', vy') = view worlWindowSize w
           (vx, vy) = (fromIntegral vx', fromIntegral vy')
+          fs = view worlFullScreen w
           scale = if wx/wy > vx/vy then vx/wx else vy/wy
 
 toScreen :: Camera -> Double -> Double

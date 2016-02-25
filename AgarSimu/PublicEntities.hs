@@ -11,7 +11,7 @@ module AgarSimu.PublicEntities
     
       -- * World
     , WorldConsts(..)
-    , worlSize, worlWindowSize
+    , worlSize, worlWindowSize, worlFullScreen
 
       -- * Bola
     , Bola(..)
@@ -48,6 +48,7 @@ type Vector = (Double, Double)
 --------------------------------------------------------------------------------
 data WorldConsts = WorldConsts { _worlSize :: !Vector
                                , _worlWindowSize :: !(Int, Int)
+                               , _worlFullScreen :: !Bool
                                } deriving Show
 $(makeLenses ''WorldConsts)
 
